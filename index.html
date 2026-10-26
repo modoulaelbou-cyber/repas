@@ -169,26 +169,9 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
   body { padding-bottom: 40px; }
 }
 @media (max-width: 420px) { .kcal { font-size: 60px; } .macros { gap: 14px; } .num input { font-size: 40px; } }
-/* Enregistrement + historique */
-.savebar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 12px; }
-.savebar label { font-size: 13px; font-weight: 600; color: var(--muted); }
-.savebar input[type="date"] { min-height: 44px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+/* Messages */
 .flash { margin: 0; font-size: 14px; color: var(--ok); }
 .flash.err { color: var(--bad); }
-.hist { margin-top: 24px; display: flex; flex-direction: column; gap: 12px; }
-.hentry { border-top: 1px solid var(--line); }
-.hentry summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; padding: 12px 0; cursor: pointer; list-style: none; align-items: baseline; }
-.hentry summary::-webkit-details-marker { display: none; }
-.hentry summary:hover .hd { text-decoration: underline; }
-.hd { font-weight: 600; }
-.hd::first-letter { text-transform: uppercase; }
-.hk { font: 700 22px/1 var(--display); font-variant-numeric: tabular-nums; text-align: right; }
-.hs { grid-column: 1 / -1; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.hbody { padding: 0 0 14px; display: flex; flex-direction: column; gap: 10px; }
-.hm { margin: 0; font-size: 14px; }
-.hl { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 2px; font-size: 14px; }
-.hl li { display: flex; justify-content: space-between; gap: 12px; }
-.hl li span { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 /* Mes repas enregistrés */
 .saved { display: flex; flex-wrap: wrap; gap: 8px; }
 .mchip { min-height: 44px; padding: 6px 14px; border: 1px solid var(--ink); background: var(--surface); border-radius: 8px; font-weight: 600; display: inline-flex; flex-direction: column; align-items: flex-start; justify-content: center; line-height: 1.15; text-align: left; max-width: 100%; }
@@ -281,11 +264,9 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
     <aside id="result" class="result" aria-live="polite"></aside>
   </div>
 
-  <section class="card hist" id="hist" aria-label="Historique des repas"></section>
-
   <section class="card backup" aria-label="Sauvegarde">
-    <div class="sect-title"><h2>Sauvegarde</h2><small>Historique, repas, aliments perso et objectifs</small></div>
-    <p class="tip">Tout est gardé sur ce téléphone. Exporte un fichier de temps en temps : si tu vides Safari ou changes de téléphone, tu le réimportes et tu récupères tout.</p>
+    <div class="sect-title"><h2>Sauvegarde</h2><small>Repas, aliments perso et objectifs</small></div>
+    <p class="tip">Tout est gardé sur ce téléphone. Exporte un fichier de temps en temps : si tu vides Safari ou changes de téléphone, tu le réimportes et tu récupères tes repas et tes aliments.</p>
     <div class="actions"><button class="cta" type="button" id="bexp">Exporter</button><button class="mini" type="button" id="bimp">Importer un fichier</button></div>
     <input type="file" id="fimp" accept="application/json,.json" hidden>
     <p class="flash" id="bflash" role="status"></p>
@@ -514,7 +495,6 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
     }
   } catch (e) {}
   state.saveDate = (function () { var d = new Date(), z = function (n) { return (n < 10 ? '0' : '') + n; }; return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()); })();
-  state.flash = ''; state.flashErr = false; state.delArm = '';
   state.saveOpen = false; state.mealName = ''; state.mflash = ''; state.manage = false; state.mArm = '';
 
   /* Repas enregistrés + aliments récents */
@@ -525,7 +505,6 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
     ids.slice().reverse().forEach(function (id) { if (!BY[id]) return; RECENT = RECENT.filter(function (x) { return x !== id; }); RECENT.unshift(id); });
     RECENT = RECENT.slice(0, 16); lsSet(RKEY, RECENT);
   }
-  var last = null;
   function save() {
     try { localStorage.setItem(KEY, JSON.stringify({ tgt: state.tgt, meal: state.meal, am: state.am, pm: state.pm })); } catch (e) {}
   }
@@ -533,7 +512,7 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
   /* ---------- Utilitaires ---------- */
   function $(s) { return document.querySelector(s); }
   function nf(n, d) { return Number(n).toLocaleString('fr-FR', { maximumFractionDigits: d || 0 }); }
-  function norm(s) { return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
+  function norm(s) { return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
   function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
   function has(id) { return state[state.meal].sel.indexOf(id) > -1; }
   function cap(it) { return it.max != null ? it.max : CAPDEF[it.sec]; }
@@ -682,11 +661,6 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
     return out;
   }
 
-  function saveBar() {
-    var fl = state.flash ? '<p class="flash' + (state.flashErr ? ' err' : '') + '" role="status">' + esc(state.flash) + '</p>' : '';
-    state.flash = '';
-    return '<div class="savebar"><label for="sd">Date</label><input id="sd" type="date" value="' + esc(state.saveDate) + '"><button class="cta" type="button" data-act="saveday">Enregistrer la journée</button></div>' + fl;
-  }
   function renderResult(A, H, R, P) {
     var el = $('#result'), g = state.tgt, h = '';
     // Carte « journée »
@@ -694,7 +668,7 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
     h += '<div class="card"><h2>Ma journée</h2>' +
       '<div class="readout"><div class="kcal">' + nf(kcalOf(dt)) + '<small>/ ' + nf(tk) + ' kcal</small></div></div>' +
       dayGauge('p', A.T.p, P.T.p, g.p) + dayGauge('c', A.T.c, P.T.c, g.c) + dayGauge('f', A.T.f, P.T.f, g.f) +
-      '<p class="foot">Trait noir = objectif. Barre claire = matin, barre pleine = soir.</p>' + saveBar() + '</div>';
+      '<p class="foot">Trait noir = objectif. Barre claire = matin, barre pleine = soir.</p></div>';
 
     // Carte « repas courant »
     var m = state.meal, S = m === 'am' ? A : P, RT = m === 'am' ? H : R;
@@ -737,7 +711,6 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
   function render() {
     var g = state.tgt, H = { p: g.p / 2, c: g.c / 2, f: g.f / 2, ov: { p: 0, c: 0, f: 0 } };
     var A = solve('am', H), R = state.am.sel.length ? remaining(A.T) : H, P = solve('pm', R);
-    last = { A: A, P: P };
     renderResult(A, H, R, P);
     renderBar(A, P);
     renderSeg();
@@ -845,111 +818,6 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
     $('#kt').textContent = nf(kcalOf(g));
   }
 
-  /* ---------- Historique : mémoire du compte (db) ou, à défaut, ce navigateur ---------- */
-  var HKEY = 'calculateur-repas-hist-v1';
-  var HS = { mode: 'pending', list: [], col: null }, OPEN = {};
-  function localLoad() { try { var r = JSON.parse(localStorage.getItem(HKEY) || '[]'); return Array.isArray(r) ? r : []; } catch (e) { return []; } }
-  function localSave(l) { try { localStorage.setItem(HKEY, JSON.stringify(l)); } catch (e) {} }
-  function sortList(l) { return l.slice().sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : 0; }); }
-  function fmtDate(d) { var x = new Date(d + 'T12:00:00'); return isNaN(x) ? d : x.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }); }
-  function r1(n) { return Math.round(n * 10) / 10; }
-  function useLocal() { HS.mode = 'local'; HS.col = null; HS.list = sortList(localLoad()); renderHist(); }
-  async function initHist() {
-    var db = null, uid = null;
-    try {
-      if (window.claude && typeof window.claude.use === 'function') {
-        var u = await window.claude.use('user');
-        db = await window.claude.use('db');
-        uid = u ? await u.id() : null;
-      }
-    } catch (e) { db = null; }
-    if (db && uid) {
-      try {
-        HS.col = db.collection('data/users/' + uid); HS.mode = 'db';
-        HS.col.orderBy('date', 'desc').limit(400).onSnapshot(function (snap) {
-          HS.list = sortList(snap.docs.map(function (d) { return d.data(); }).filter(function (d) { return d && d.date; }));
-          renderHist();
-        }, function () { useLocal(); });
-      } catch (e) { useLocal(); }
-    } else useLocal();
-    renderHist();
-  }
-  var histReady = initHist();
-  function snapshotDay() {
-    if (!last) return null;
-    function pack(S) {
-      return { items: S.rows.map(function (r) { return { id: r.it.id, name: r.it.name, g: r1(r.g) }; }), p: r1(S.T.p), c: r1(S.T.c), f: r1(S.T.f), kcal: Math.round(S.T.kcal) };
-    }
-    var a = pack(last.A), b = pack(last.P);
-    if (!a.items.length && !b.items.length) return null;
-    return { date: state.saveDate, tgt: { p: state.tgt.p, c: state.tgt.c, f: state.tgt.f }, am: a, pm: b,
-      p: r1(a.p + b.p), c: r1(a.c + b.c), f: r1(a.f + b.f), kcal: a.kcal + b.kcal, savedAt: Date.now() };
-  }
-  function flash(msg, err) { state.flash = msg; state.flashErr = !!err; render(); }
-  async function saveDay() {
-    await histReady;
-    var d = snapshotDay();
-    if (!d) { flash('Rien à enregistrer : coche au moins un aliment.', true); return; }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(d.date)) { flash('Choisis une date valide.', true); return; }
-    var existed = HS.list.some(function (x) { return x.date === d.date; });
-    try {
-      if (HS.mode === 'db' && HS.col) await HS.col.doc('d_' + d.date).set(d);
-      else { var l = localLoad().filter(function (x) { return x.date !== d.date; }); l.push(d); HS.list = sortList(l).slice(0, 400); localSave(HS.list); renderHist(); }
-      OPEN[d.date] = true;
-      flash('Journée du ' + fmtDate(d.date) + (existed ? ' mise à jour.' : ' enregistrée.'));
-    } catch (e) {
-      flash('Enregistrement impossible' + (e && e.code === 'quota_exceeded' ? ' : la mémoire est pleine.' : '. Réessaie dans un instant.'), true);
-    }
-  }
-  async function delDay(date) {
-    try {
-      if (HS.mode === 'db' && HS.col) await HS.col.doc('d_' + date).delete();
-      else { HS.list = HS.list.filter(function (x) { return x.date !== date; }); localSave(HS.list); }
-      HS.list = HS.list.filter(function (x) { return x.date !== date; });
-    } catch (e) {}
-    state.delArm = ''; renderHist();
-  }
-  function qtyText(x) {
-    var it = BY[x.id];
-    if (it && it.u) { var n = x.g / it.u[2]; return nf(Math.round(n * 10) / 10, 1) + ' ' + (n > 1 ? it.u[1] : it.u[0]); }
-    return nf(x.g) + ' g';
-  }
-  function mealList(label, m) {
-    if (!m || !m.items || !m.items.length) return '<p class="hm"><b>' + label + '</b> : rien d\'enregistré</p>';
-    return '<div><p class="hm"><b>' + label + '</b> · ' + nf(m.kcal) + ' kcal · P ' + nf(m.p) + ' · G ' + nf(m.c) + ' · L ' + nf(m.f) + '</p><ul class="hl">' +
-      m.items.map(function (x) { return '<li>' + esc(x.name) + '<span>' + qtyText(x) + '</span></li>'; }).join('') + '</ul></div>';
-  }
-  function renderHist() {
-    var el = $('#hist'); if (!el) return;
-    var L = HS.list;
-    var h = '<div class="sect-title"><h2>Historique</h2><small>' + (HS.mode === 'db' ? 'Enregistré sur ton compte, visible par toi seul' : HS.mode === 'local' ? 'Enregistré sur ce navigateur uniquement' : 'Chargement…') + '</small></div>';
-    if (!L.length) {
-      h += '<p class="tip">' + (HS.mode === 'pending' ? 'Chargement de ton historique…' : 'Aucune journée enregistrée. Compose tes deux repas, puis clique sur « Enregistrer la journée ».') + '</p>';
-      el.innerHTML = h; return;
-    }
-    var n = Math.min(L.length, 7), s = { kcal: 0, p: 0, c: 0, f: 0 };
-    L.slice(0, n).forEach(function (d) { s.kcal += d.kcal || 0; s.p += d.p || 0; s.c += d.c || 0; s.f += d.f || 0; });
-    h += '<p class="need">Moyenne sur ' + (n > 1 ? 'les ' + n + ' dernières journées' : 'la dernière journée') + ' : <b>' + nf(s.kcal / n) + ' kcal</b> · P <b>' + nf(s.p / n) + ' g</b> · G <b>' + nf(s.c / n) + ' g</b> · L <b>' + nf(s.f / n) + ' g</b></p>';
-    L.forEach(function (d) {
-      var t = d.tgt || { p: 0, c: 0, f: 0 };
-      h += '<details class="hentry" data-date="' + esc(d.date) + '"' + (OPEN[d.date] ? ' open' : '') + '><summary><span class="hd">' + esc(fmtDate(d.date)) + '</span><span class="hk">' + nf(d.kcal) + ' kcal</span>' +
-        '<span class="hs">P ' + nf(d.p) + ' / ' + nf(t.p) + ' · G ' + nf(d.c) + ' / ' + nf(t.c) + ' · L ' + nf(d.f) + ' / ' + nf(t.f) + ' g</span></summary>' +
-        '<div class="hbody">' + mealList('Matin', d.am) + mealList('Soir', d.pm) +
-        '<div class="actions"><button class="mini" type="button" data-h="reuse-am" data-date="' + esc(d.date) + '">Réutiliser le matin</button>' +
-        '<button class="mini" type="button" data-h="reuse-pm" data-date="' + esc(d.date) + '">Réutiliser le soir</button>' +
-        '<button class="mini" type="button" data-h="del" data-date="' + esc(d.date) + '">' + (state.delArm === d.date ? 'Confirmer la suppression' : 'Supprimer') + '</button></div></div></details>';
-    });
-    el.innerHTML = h;
-  }
-  function reuse(date, m) {
-    var d = HS.list.filter(function (x) { return x.date === date; })[0];
-    if (!d || !d[m]) return;
-    var s = state[m]; s.sel = []; s.pins = {}; s.force = {};
-    d[m].items.forEach(function (x) { if (BY[x.id]) { s.sel.push(x.id); s.pins[x.id] = x.g; } });
-    state.meal = m; save(); renderPresets(); renderFoods(); render();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
   /* ---------- Événements ---------- */
   $('#foods').addEventListener('click', function (e) {
     var b = e.target.closest('.chip'); if (!b) return;
@@ -998,9 +866,8 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
   /* ---------- Sauvegarde : export / import ---------- */
   function bmsg(t, err) { var el = $('#bflash'); el.className = 'flash' + (err ? ' err' : ''); el.textContent = t; }
   $('#bexp').addEventListener('click', async function () {
-    await histReady;
     var data = { app: 'calculateur-repas', v: 1, exportedAt: new Date().toISOString(),
-      state: { tgt: state.tgt, am: state.am, pm: state.pm }, hist: HS.list, meals: MEALS, foods: CUSTOM, recent: RECENT };
+      state: { tgt: state.tgt, am: state.am, pm: state.pm }, meals: MEALS, foods: CUSTOM, recent: RECENT };
     var name = 'repas-sauvegarde-' + state.saveDate + '.json', txt = JSON.stringify(data);
     try {
       var file = new File([txt], name, { type: 'application/json' });
@@ -1020,20 +887,14 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
     rd.onload = async function () {
       var d; try { d = JSON.parse(rd.result); } catch (x) { d = null; }
       if (!d || d.app !== 'calculateur-repas') { bmsg('Ce fichier n\'est pas une sauvegarde du calculateur.', true); return; }
-      await histReady;
-      var foods = Array.isArray(d.foods) ? d.foods : [], meals = Array.isArray(d.meals) ? d.meals : [], hist = Array.isArray(d.hist) ? d.hist : [];
+      var foods = Array.isArray(d.foods) ? d.foods : [], meals = Array.isArray(d.meals) ? d.meals : [];
       foods.forEach(function (c) { if (c && c.id && !CUSTOM.some(function (x) { return x.id === c.id; })) CUSTOM.push(c); });
       lsSet(FKEY, CUSTOM);
       meals.forEach(function (m) { if (m && m.id && Array.isArray(m.sel)) { MEALS = MEALS.filter(function (x) { return x.id !== m.id; }); MEALS.push(m); } });
       MEALS.sort(function (a, b) { return (b.at || 0) - (a.at || 0); }); lsSet(MKEY, MEALS);
       if (Array.isArray(d.recent)) lsSet(RKEY, d.recent);
       if (d.state && d.state.tgt) lsSet(KEY, { tgt: d.state.tgt, meal: state.meal, am: d.state.am || state.am, pm: d.state.pm || state.pm });
-      var valid = hist.filter(function (x) { return x && /^\d{4}-\d{2}-\d{2}$/.test(x.date); });
-      try {
-        if (HS.mode === 'db' && HS.col) { for (var i = 0; i < valid.length; i++) await HS.col.doc('d_' + valid[i].date).set(valid[i]); }
-        else { var l = localLoad(); valid.forEach(function (x) { l = l.filter(function (y) { return y.date !== x.date; }); l.push(x); }); localSave(sortList(l).slice(0, 400)); }
-      } catch (x) {}
-      bmsg('Importé : ' + valid.length + ' journée(s), ' + meals.length + ' repas, ' + foods.length + ' aliment(s). Rechargement…');
+      bmsg('Importé : ' + meals.length + ' repas, ' + foods.length + ' aliment(s). Rechargement…');
       setTimeout(function () { location.reload(); }, 900);
     };
     rd.readAsText(f); e.target.value = '';
@@ -1064,7 +925,6 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
     state.tgt = { p: DEFT.p, c: DEFT.c, f: DEFT.f }; save(); renderTargets(false); render();
   });
   $('#result').addEventListener('change', function (e) {
-    if (e.target.id === 'sd') { state.saveDate = e.target.value; return; }
     if (!e.target.classList.contains('qin')) return;
     var row = e.target.closest('.row'), it = BY[row.getAttribute('data-id')], v = parseFloat(e.target.value), s = state[state.meal];
     if (isNaN(v) || v < 0) { render(); return; }
@@ -1074,7 +934,6 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
   $('#result').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return;
     var act = b.getAttribute('data-act'), s = state[state.meal];
-    if (act === 'saveday') { saveDay(); return; }
     if (act === 'mealsave') { state.saveOpen = true; state.mealName = defaultMealName(); render(); var mi = $('#mname'); if (mi) { mi.focus(); mi.select(); } return; }
     if (act === 'mealok') { saveMeal(); return; }
     if (act === 'mealno') { state.saveOpen = false; render(); return; }
@@ -1087,16 +946,6 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
     if (act === 'std') { delete s.pins[id]; }
     save(); render();
   });
-  $('#hist').addEventListener('click', function (e) {
-    var b = e.target.closest('button[data-h]'); if (!b) return;
-    var act = b.getAttribute('data-h'), date = b.getAttribute('data-date');
-    if (act === 'reuse-am') reuse(date, 'am');
-    else if (act === 'reuse-pm') reuse(date, 'pm');
-    else if (act === 'del') { if (state.delArm === date) delDay(date); else { state.delArm = date; renderHist(); } }
-  });
-  $('#hist').addEventListener('toggle', function (e) {
-    var d = e.target; if (d && d.classList && d.classList.contains('hentry')) OPEN[d.getAttribute('data-date')] = d.open;
-  }, true);
   $('#bar').addEventListener('click', function (e) {
     if (!e.target.closest('#goto')) return;
     var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1104,7 +953,7 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
     t.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
   });
 
-  renderTargets(false); renderTabs(); renderPresets(); renderFoods(); render(); renderHist(); renderMyList();
+  renderTargets(false); renderTabs(); renderPresets(); renderFoods(); render(); renderMyList();
 })();
 </script>
 
