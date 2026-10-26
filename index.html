@@ -189,6 +189,36 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
 .hl { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 2px; font-size: 14px; }
 .hl li { display: flex; justify-content: space-between; gap: 12px; }
 .hl li span { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* Mes repas enregistrés */
+.saved { display: flex; flex-wrap: wrap; gap: 8px; }
+.mchip { min-height: 44px; padding: 6px 14px; border: 1px solid var(--ink); background: var(--surface); border-radius: 8px; font-weight: 600; display: inline-flex; flex-direction: column; align-items: flex-start; justify-content: center; line-height: 1.15; text-align: left; max-width: 100%; }
+.mchip small { font-weight: 500; font-size: 12px; color: var(--muted); }
+.mchip:hover { background: var(--surface2); }
+.mchip.del { border-color: var(--bad); color: var(--bad); }
+.mchip.arm { background: var(--bad); border-color: var(--bad); color: var(--on); }
+.mchip.arm small { color: inherit; }
+.subh { margin: 14px 0 8px; font: 600 12px/1 var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.savemeal { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.savemeal input, .ff input, .ff select { min-height: 44px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); min-width: 0; }
+.savemeal input { flex: 1 1 180px; }
+/* Récents */
+.sec.sr { --sc: var(--ink); }
+/* Aliments perso */
+.addfood { margin-top: 22px; }
+.addfood summary { cursor: pointer; font: 700 20px/1.2 var(--display); text-transform: uppercase; letter-spacing: .04em; list-style: none; display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+.addfood summary::-webkit-details-marker { display: none; }
+.addfood summary small { font: 500 13px var(--body); text-transform: none; letter-spacing: 0; color: var(--muted); }
+.addfood[open] summary { margin-bottom: 14px; }
+.fgrid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+.ff { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.ff.wide { grid-column: 1 / -1; }
+.ff label { font-size: 13px; font-weight: 600; color: var(--muted); }
+.ff input, .ff select { width: 100%; }
+.mylist { list-style: none; margin: 14px 0 0; padding: 0; border-top: 1px solid var(--line); }
+.mylist li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.mylist li span { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+/* Sauvegarde */
+.backup { margin-top: 20px; display: flex; flex-direction: column; gap: 12px; }
 @media (prefers-reduced-motion: reduce) { .track i.sg { transition: none; } }
 </style>
 </head>
@@ -197,7 +227,7 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
   <header>
     <p class="eyebrow">Nutrition · valeurs moyennes estimées</p>
     <h1>Calculateur de repas</h1>
-    <p class="lede">Fixe tes objectifs de la journée, puis coche tes sources : chaque repas vise la moitié de ta journée, et le soir s'ajuste si tu modifies le matin.</p>
+    <p class="lede">Fixe tes objectifs de la journée, puis coche tes sources : chaque repas vise la moitié de ta journée, et le soir s'ajuste si tu modifies le matin. Enregistre tes repas habituels pour les recocher en un tap.</p>
   </header>
 
   <section class="card goals" aria-label="Objectifs de la journée">
@@ -214,8 +244,10 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
     <main class="picker">
       <div class="seg" id="seg" role="group" aria-label="Choix du repas"></div>
 
-      <section aria-label="Repas types">
-        <div class="sect-title"><h2>Repas types</h2><small>Un tap pré-coche</small></div>
+      <section aria-label="Mes repas">
+        <div class="sect-title"><h2>Mes repas</h2><button type="button" class="mini" id="mmanage">Gérer</button></div>
+        <div class="saved" id="saved"></div>
+        <h4 class="subh">Repas types</h4>
         <div class="presets" id="presets"></div>
       </section>
 
@@ -225,12 +257,39 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
         <div class="tabs" id="tabs" role="group" aria-label="Catégories"></div>
         <div id="foods"></div>
       </section>
+
+      <details class="card addfood" id="addfood">
+        <summary>Ajouter un aliment <small>valeurs de l'étiquette</small></summary>
+        <form id="ffood" autocomplete="off">
+          <div class="fgrid">
+            <div class="ff wide"><label for="fn">Nom</label><input id="fn" required maxlength="50" placeholder="Ex. : Skyr Siggi's vanille"></div>
+            <div class="ff wide"><label for="fs">Catégorie (ce que l'aliment apporte surtout)</label>
+              <select id="fs"><option value="p">Protéines (quantité calculée)</option><option value="c">Glucides (quantité calculée)</option><option value="l">Lipides (quantité calculée)</option><option value="e">Extra (quantité fixe)</option></select></div>
+            <div class="ff"><label for="fp">Protéines / 100 g</label><input id="fp" type="number" inputmode="decimal" min="0" max="100" step="0.1" required></div>
+            <div class="ff"><label for="fc">Glucides / 100 g</label><input id="fc" type="number" inputmode="decimal" min="0" max="100" step="0.1" required></div>
+            <div class="ff"><label for="fl">Lipides / 100 g</label><input id="fl" type="number" inputmode="decimal" min="0" max="100" step="0.1" required></div>
+            <div class="ff"><label for="fu">Poids d'une portion (g)</label><input id="fu" type="number" inputmode="decimal" min="0" step="1" placeholder="Optionnel"></div>
+          </div>
+          <p class="tip" style="margin-top:10px">Portion : remplis-la pour un aliment qui se compte (bouteille, pot, tranche). Laisse vide pour un aliment en grammes.</p>
+          <div class="actions" style="margin-top:12px"><button class="cta" type="submit">Ajouter</button></div>
+          <p class="flash" id="fflash" role="status"></p>
+        </form>
+        <ul class="mylist" id="mylist"></ul>
+      </details>
     </main>
 
     <aside id="result" class="result" aria-live="polite"></aside>
   </div>
 
   <section class="card hist" id="hist" aria-label="Historique des repas"></section>
+
+  <section class="card backup" aria-label="Sauvegarde">
+    <div class="sect-title"><h2>Sauvegarde</h2><small>Historique, repas, aliments perso et objectifs</small></div>
+    <p class="tip">Tout est gardé sur ce téléphone. Exporte un fichier de temps en temps : si tu vides Safari ou changes de téléphone, tu le réimportes et tu récupères tout.</p>
+    <div class="actions"><button class="cta" type="button" id="bexp">Exporter</button><button class="mini" type="button" id="bimp">Importer un fichier</button></div>
+    <input type="file" id="fimp" accept="application/json,.json" hidden>
+    <p class="flash" id="bflash" role="status"></p>
+  </section>
 </div>
 
 <div class="bar" id="bar"></div>
@@ -382,12 +441,25 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
   add('biere', 'Bière (canette)', 'e', PL, 0.3, 3.5, 0, 1, { u: ['canette', 'canettes', 330] });
   D.forEach(function (it) { it.kcal = it.p * 4 + it.c * 4 + it.f * 9; });
 
+  /* Aliments perso (ajoutés depuis une étiquette) */
+  var MY = 'Mes aliments', FKEY = 'calculateur-repas-foods-v1', DEFQ = { p: 150, c: 80, l: 15, e: 100 };
+  function lsGet(k, fb) { try { var r = JSON.parse(localStorage.getItem(k)); return r == null ? fb : r; } catch (e) { return fb; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+  var CUSTOM = lsGet(FKEY, []); if (!Array.isArray(CUSTOM)) CUSTOM = [];
+  function addCustom(c) {
+    var u = +c.u > 0 ? +c.u : 0;
+    add(c.id, c.name, c.sec, MY, +c.p || 0, +c.c || 0, +c.f || 0, u ? 1 : DEFQ[c.sec], u ? { u: ['portion', 'portions', u], mine: true } : { mine: true });
+    var it = D[D.length - 1]; it.kcal = it.p * 4 + it.c * 4 + it.f * 9; return it;
+  }
+  CUSTOM = CUSTOM.filter(function (c) { return c && c.id && c.name && 'pcle'.indexOf(c.sec) > -1; });
+  CUSTOM.forEach(addCustom);
+
   var SECS = [['p', 'Protéines', 'sp', 'g de protéines / 100 g'], ['c', 'Glucides', 'sc', 'g de glucides / 100 g'], ['l', 'Lipides', 'sl', 'g de lipides / 100 g'], ['e', 'Extras', 'se', 'quantité fixe']];
   var SUBS = {
-    p: ['Viandes', 'Poissons', 'Œufs & laitiers', 'Végétal & poudres'],
-    c: ['Féculents', 'Pains & pâte', 'Fruits', 'Sucres & céréales'],
-    l: ['Huiles & beurres', 'Oléagineux', 'Fromages', 'Autres sources'],
-    e: ['Légumes', 'Sauces', 'Plaisir']
+    p: [MY, 'Viandes', 'Poissons', 'Œufs & laitiers', 'Végétal & poudres'],
+    c: [MY, 'Féculents', 'Pains & pâte', 'Fruits', 'Sucres & céréales'],
+    l: [MY, 'Huiles & beurres', 'Oléagineux', 'Fromages', 'Autres sources'],
+    e: [MY, 'Légumes', 'Sauces', 'Plaisir']
   };
   var MK = { p: 'p', c: 'c', l: 'f' };          // macro portée par chaque section
   var NAMES = { p: 'protéines', c: 'glucides', f: 'lipides' };
@@ -443,6 +515,16 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
   } catch (e) {}
   state.saveDate = (function () { var d = new Date(), z = function (n) { return (n < 10 ? '0' : '') + n; }; return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()); })();
   state.flash = ''; state.flashErr = false; state.delArm = '';
+  state.saveOpen = false; state.mealName = ''; state.mflash = ''; state.manage = false; state.mArm = '';
+
+  /* Repas enregistrés + aliments récents */
+  var MKEY = 'calculateur-repas-meals-v1', RKEY = 'calculateur-repas-recent-v1';
+  var MEALS = lsGet(MKEY, []); if (!Array.isArray(MEALS)) MEALS = [];
+  var RECENT = lsGet(RKEY, []); if (!Array.isArray(RECENT)) RECENT = [];
+  function touchRecent(ids) {
+    ids.slice().reverse().forEach(function (id) { if (!BY[id]) return; RECENT = RECENT.filter(function (x) { return x !== id; }); RECENT.unshift(id); });
+    RECENT = RECENT.slice(0, 16); lsSet(RKEY, RECENT);
+  }
   var last = null;
   function save() {
     try { localStorage.setItem(KEY, JSON.stringify({ tgt: state.tgt, meal: state.meal, am: state.am, pm: state.pm })); } catch (e) {}
@@ -626,8 +708,14 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
       h += readout(S.T) + mealGauge('p', S.T.p, RT.p) + mealGauge('c', S.T.c, RT.c) + mealGauge('f', S.T.f, RT.f) + rowsHtml(S, m);
       h += '<div class="status">' + pmStatus(S, RT).map(function (x) { return '<p class="' + x[0] + '">' + x[1] + '</p>'; }).join('') + '</div>';
       h += '<p class="foot">Poids crus sauf mention contraire. Moyennes : l\'étiquette prévaut (viande hachée, pains burger, sauces, produits laitiers). Modifie une quantité pour la fixer, les autres se recalculent.</p>';
-      h += '<div class="actions">' + (m === 'am' ? '<button class="cta" type="button" data-act="gopm">Composer le repas du soir</button>' : '') + '<button class="mini" data-act="clear" type="button">Tout décocher</button></div>';
+      if (state.saveOpen) {
+        h += '<div class="savemeal"><input id="mname" type="text" maxlength="40" placeholder="Nom du repas" value="' + esc(state.mealName) + '" aria-label="Nom du repas">' +
+          '<button class="cta" type="button" data-act="mealok">Enregistrer</button><button class="mini" type="button" data-act="mealno">Annuler</button></div>';
+      }
+      h += '<div class="actions">' + (state.saveOpen ? '' : '<button class="cta" type="button" data-act="mealsave">Enregistrer ce repas</button>') +
+        (m === 'am' ? '<button class="mini" type="button" data-act="gopm">Composer le repas du soir</button>' : '') + '<button class="mini" data-act="clear" type="button">Tout décocher</button></div>';
     }
+    if (state.mflash) { h += '<p class="flash" role="status">' + esc(state.mflash) + '</p>'; state.mflash = ''; }
     h += '</div>';
     el.innerHTML = h;
   }
@@ -658,6 +746,12 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
   /* ---------- Rendu : sélecteur ---------- */
   function renderFoods() {
     var q = norm(state.q.trim()), html = '', any = false;
+    var rec = RECENT.filter(function (id) { return BY[id]; });
+    if (state.cat === 'all' && !q && rec.length) {
+      any = true;
+      html += '<div class="sec sr" data-sec="r"><h3 class="sech">Récents<small>tes derniers aliments</small></h3><div class="sub"><div class="chips" style="margin-top:10px">' +
+        rec.map(function (id) { var it = BY[id]; return '<button type="button" class="chip" data-id="' + it.id + '" aria-pressed="' + has(it.id) + '">' + esc(it.name) + '</button>'; }).join('') + '</div></div></div>';
+    }
     SECS.forEach(function (S) {
       if (state.cat !== 'all' && state.cat !== S[0]) return;
       var secHtml = '', total = 0, n = 0;
@@ -685,6 +779,62 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
   }
   function renderPresets() {
     $('#presets').innerHTML = PRESETS[state.meal].map(function (p, i) { return '<button type="button" data-i="' + i + '">' + p[0] + '</button>'; }).join('');
+    renderSaved();
+  }
+  function renderSaved() {
+    var el = $('#saved'), mb = $('#mmanage');
+    mb.hidden = !MEALS.length; mb.textContent = state.manage ? 'Terminé' : 'Gérer';
+    if (!MEALS.length) { state.manage = false; el.innerHTML = '<p class="tip">Compose un repas puis touche « Enregistrer ce repas » : il apparaîtra ici, prêt à recocher en un tap.</p>'; return; }
+    el.innerHTML = MEALS.map(function (m) {
+      var n = m.sel.filter(function (id) { return BY[id]; }).length, arm = state.manage && state.mArm === m.id;
+      var sub = state.manage ? (arm ? 'Toucher pour confirmer' : 'Supprimer') : n + ' aliment' + (n > 1 ? 's' : '') + (m.meal === 'am' ? ' · matin' : m.meal === 'pm' ? ' · soir' : '');
+      return '<button type="button" class="mchip' + (state.manage ? ' del' : '') + (arm ? ' arm' : '') + '" data-mid="' + esc(m.id) + '">' + esc(m.name) + '<small>' + sub + '</small></button>';
+    }).join('');
+  }
+  function defaultMealName() {
+    var s = state[state.meal];
+    var main = s.sel.map(function (id) { return BY[id]; }).filter(function (it) { return it && it.sec !== 'e'; }).slice(0, 3);
+    return main.map(function (it) { return it.name.replace(/\s*\(.*\)$/, ''); }).join(' + ');
+  }
+  function saveMeal() {
+    var name = (state.mealName || '').trim(), s = state[state.meal];
+    if (!name) { state.mflash = 'Donne un nom au repas.'; render(); return; }
+    if (!s.sel.length) { state.saveOpen = false; render(); return; }
+    var pins = {}, force = {};
+    s.sel.forEach(function (id) { if (s.pins[id] != null) pins[id] = s.pins[id]; if (s.force[id]) force[id] = true; });
+    var ex = MEALS.filter(function (m) { return norm(m.name) === norm(name); })[0];
+    var rec = { id: ex ? ex.id : 'm' + Date.now(), name: name, meal: state.meal, sel: s.sel.slice(), pins: pins, force: force, at: Date.now() };
+    MEALS = MEALS.filter(function (m) { return m.id !== rec.id; }); MEALS.unshift(rec);
+    if (!lsSet(MKEY, MEALS)) { state.mflash = 'Enregistrement impossible : mémoire du navigateur indisponible.'; render(); return; }
+    state.saveOpen = false; state.mealName = '';
+    state.mflash = '« ' + name + ' » ' + (ex ? 'mis à jour.' : 'enregistré dans Mes repas.');
+    renderSaved(); render();
+  }
+  function loadMeal(id) {
+    var m = MEALS.filter(function (x) { return x.id === id; })[0]; if (!m) return;
+    var s = state[state.meal];
+    s.sel = m.sel.filter(function (x) { return BY[x]; }); s.pins = {}; s.force = {};
+    s.sel.forEach(function (x) { if (m.pins && m.pins[x] != null) s.pins[x] = m.pins[x]; if (m.force && m.force[x]) s.force[x] = true; });
+    touchRecent(s.sel); save(); renderFoods(); render();
+  }
+  function renderMyList() {
+    var el = $('#mylist'), mine = D.filter(function (it) { return it.mine; });
+    var SN = { p: 'Protéines', c: 'Glucides', l: 'Lipides', e: 'Extra' };
+    el.innerHTML = mine.map(function (it) {
+      return '<li><div>' + esc(it.name) + '<br><span>' + SN[it.sec] + ' · P ' + nf(it.p, 1) + ' · G ' + nf(it.c, 1) + ' · L ' + nf(it.f, 1) + ' / 100 g' + (it.u ? ' · portion ' + nf(it.u[2]) + ' g' : '') + '</span></div>' +
+        '<button class="mini" type="button" data-fdel="' + esc(it.id) + '">' + (state.fArm === it.id ? 'Confirmer' : 'Supprimer') + '</button></li>';
+    }).join('');
+    el.hidden = !mine.length;
+  }
+  function refreshChips() {
+    var s = state[state.meal];
+    document.querySelectorAll('#foods .chip').forEach(function (c) { c.setAttribute('aria-pressed', String(s.sel.indexOf(c.getAttribute('data-id')) > -1)); });
+    document.querySelectorAll('#foods .sec').forEach(function (sec) {
+      if (sec.getAttribute('data-sec') === 'r') return;
+      var n = sec.querySelectorAll('.chip[aria-pressed="true"]').length, h = sec.querySelector('.sech'), sm = h.querySelector('small');
+      var old = h.querySelector('b'); if (old) old.remove();
+      if (n) { var nb = document.createElement('b'); nb.textContent = n + ' coché' + (n > 1 ? 's' : ''); h.insertBefore(nb, sm); }
+    });
   }
   function renderTargets(skipInputs) {
     var g = state.tgt;
@@ -804,16 +954,93 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
   $('#foods').addEventListener('click', function (e) {
     var b = e.target.closest('.chip'); if (!b) return;
     var s = state[state.meal], id = b.getAttribute('data-id'), i = s.sel.indexOf(id);
-    if (i > -1) { s.sel.splice(i, 1); delete s.pins[id]; delete s.force[id]; } else s.sel.push(id);
-    b.setAttribute('aria-pressed', String(i === -1));
-    var sec = b.closest('.sec'), n = sec.querySelectorAll('.chip[aria-pressed="true"]').length, h = sec.querySelector('.sech'), sm = h.querySelector('small');
-    var old = h.querySelector('b'); if (old) old.remove();
-    if (n) { var nb = document.createElement('b'); nb.textContent = n + ' coché' + (n > 1 ? 's' : ''); h.insertBefore(nb, sm); h.insertBefore(document.createTextNode(' '), nb); }
+    if (i > -1) { s.sel.splice(i, 1); delete s.pins[id]; delete s.force[id]; } else { s.sel.push(id); touchRecent([id]); }
+    refreshChips();
     save(); render();
+  });
+  $('#saved').addEventListener('click', function (e) {
+    var b = e.target.closest('.mchip'); if (!b) return;
+    var id = b.getAttribute('data-mid');
+    if (!state.manage) { loadMeal(id); return; }
+    if (state.mArm !== id) { state.mArm = id; renderSaved(); return; }
+    MEALS = MEALS.filter(function (m) { return m.id !== id; }); lsSet(MKEY, MEALS); state.mArm = ''; renderSaved();
+  });
+  $('#mmanage').addEventListener('click', function () { state.manage = !state.manage; state.mArm = ''; renderSaved(); });
+  $('#result').addEventListener('input', function (e) { if (e.target.id === 'mname') state.mealName = e.target.value; });
+  $('#result').addEventListener('keydown', function (e) { if (e.target.id === 'mname' && e.key === 'Enter') { e.preventDefault(); saveMeal(); } });
+  $('#ffood').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var name = $('#fn').value.trim(), fl = $('#fflash');
+    var c = { id: 'u' + Date.now(), name: name, sec: $('#fs').value, p: parseFloat($('#fp').value), c: parseFloat($('#fc').value), f: parseFloat($('#fl').value), u: parseFloat($('#fu').value) || 0 };
+    if (!name || [c.p, c.c, c.f].some(function (v) { return isNaN(v) || v < 0 || v > 100; }) || c.p + c.c + c.f > 100) {
+      fl.className = 'flash err'; fl.textContent = 'Vérifie les valeurs : elles sont pour 100 g, et leur total ne peut pas dépasser 100.'; return;
+    }
+    if (D.some(function (it) { return norm(it.name) === norm(name); })) { fl.className = 'flash err'; fl.textContent = 'Un aliment porte déjà ce nom.'; return; }
+    if (c.sec !== 'e' && ({ p: c.p, c: c.c, l: c.f })[c.sec] <= 0) { fl.className = 'flash err'; fl.textContent = 'Cet aliment n\'apporte pas de ' + ({ p: 'protéines', c: 'glucides', l: 'lipides' })[c.sec] + ' : choisis une autre catégorie.'; return; }
+    CUSTOM.push(c);
+    if (!lsSet(FKEY, CUSTOM)) { CUSTOM.pop(); fl.className = 'flash err'; fl.textContent = 'Enregistrement impossible.'; return; }
+    var it = addCustom(c); BY[it.id] = it;
+    $('#ffood').reset(); fl.className = 'flash'; fl.textContent = '« ' + name + ' » ajouté. Tu le trouves en haut de sa catégorie, dans « Mes aliments ».';
+    renderFoods(); renderMyList();
+  });
+  $('#mylist').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-fdel]'); if (!b) return;
+    var id = b.getAttribute('data-fdel');
+    if (state.fArm !== id) { state.fArm = id; renderMyList(); return; }
+    state.fArm = '';
+    CUSTOM = CUSTOM.filter(function (c) { return c.id !== id; }); lsSet(FKEY, CUSTOM);
+    D = D.filter(function (it) { return it.id !== id; }); delete BY[id];
+    ['am', 'pm'].forEach(function (m) { var s = state[m]; s.sel = s.sel.filter(function (x) { return x !== id; }); delete s.pins[id]; delete s.force[id]; });
+    RECENT = RECENT.filter(function (x) { return x !== id; }); lsSet(RKEY, RECENT);
+    save(); renderMyList(); renderSaved(); renderFoods(); render();
+  });
+
+  /* ---------- Sauvegarde : export / import ---------- */
+  function bmsg(t, err) { var el = $('#bflash'); el.className = 'flash' + (err ? ' err' : ''); el.textContent = t; }
+  $('#bexp').addEventListener('click', async function () {
+    await histReady;
+    var data = { app: 'calculateur-repas', v: 1, exportedAt: new Date().toISOString(),
+      state: { tgt: state.tgt, am: state.am, pm: state.pm }, hist: HS.list, meals: MEALS, foods: CUSTOM, recent: RECENT };
+    var name = 'repas-sauvegarde-' + state.saveDate + '.json', txt = JSON.stringify(data);
+    try {
+      var file = new File([txt], name, { type: 'application/json' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: 'Sauvegarde calculateur de repas' });
+        bmsg('Fichier prêt. Choisis « Enregistrer dans Fichiers » pour le garder.'); return;
+      }
+    } catch (e) { if (e && e.name === 'AbortError') return; }
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([txt], { type: 'application/json' })); a.download = name;
+    document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    bmsg('Fichier ' + name + ' téléchargé.');
+  });
+  $('#bimp').addEventListener('click', function () { $('#fimp').click(); });
+  $('#fimp').addEventListener('change', function (e) {
+    var f = e.target.files && e.target.files[0]; if (!f) return;
+    var rd = new FileReader();
+    rd.onload = async function () {
+      var d; try { d = JSON.parse(rd.result); } catch (x) { d = null; }
+      if (!d || d.app !== 'calculateur-repas') { bmsg('Ce fichier n\'est pas une sauvegarde du calculateur.', true); return; }
+      await histReady;
+      var foods = Array.isArray(d.foods) ? d.foods : [], meals = Array.isArray(d.meals) ? d.meals : [], hist = Array.isArray(d.hist) ? d.hist : [];
+      foods.forEach(function (c) { if (c && c.id && !CUSTOM.some(function (x) { return x.id === c.id; })) CUSTOM.push(c); });
+      lsSet(FKEY, CUSTOM);
+      meals.forEach(function (m) { if (m && m.id && Array.isArray(m.sel)) { MEALS = MEALS.filter(function (x) { return x.id !== m.id; }); MEALS.push(m); } });
+      MEALS.sort(function (a, b) { return (b.at || 0) - (a.at || 0); }); lsSet(MKEY, MEALS);
+      if (Array.isArray(d.recent)) lsSet(RKEY, d.recent);
+      if (d.state && d.state.tgt) lsSet(KEY, { tgt: d.state.tgt, meal: state.meal, am: d.state.am || state.am, pm: d.state.pm || state.pm });
+      var valid = hist.filter(function (x) { return x && /^\d{4}-\d{2}-\d{2}$/.test(x.date); });
+      try {
+        if (HS.mode === 'db' && HS.col) { for (var i = 0; i < valid.length; i++) await HS.col.doc('d_' + valid[i].date).set(valid[i]); }
+        else { var l = localLoad(); valid.forEach(function (x) { l = l.filter(function (y) { return y.date !== x.date; }); l.push(x); }); localSave(sortList(l).slice(0, 400)); }
+      } catch (x) {}
+      bmsg('Importé : ' + valid.length + ' journée(s), ' + meals.length + ' repas, ' + foods.length + ' aliment(s). Rechargement…');
+      setTimeout(function () { location.reload(); }, 900);
+    };
+    rd.readAsText(f); e.target.value = '';
   });
   $('#seg').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return;
-    state.meal = b.getAttribute('data-m'); save(); renderPresets(); renderFoods(); render();
+    state.meal = b.getAttribute('data-m'); state.saveOpen = false; save(); renderPresets(); renderFoods(); render();
   });
   $('#tabs').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return;
@@ -848,6 +1075,9 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
     var b = e.target.closest('button'); if (!b) return;
     var act = b.getAttribute('data-act'), s = state[state.meal];
     if (act === 'saveday') { saveDay(); return; }
+    if (act === 'mealsave') { state.saveOpen = true; state.mealName = defaultMealName(); render(); var mi = $('#mname'); if (mi) { mi.focus(); mi.select(); } return; }
+    if (act === 'mealok') { saveMeal(); return; }
+    if (act === 'mealno') { state.saveOpen = false; render(); return; }
     if (act === 'gopm') { state.meal = 'pm'; save(); renderPresets(); renderFoods(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
     if (act === 'clear') { s.sel = []; s.pins = {}; s.force = {}; save(); renderFoods(); render(); return; }
     var row = b.closest('.row'); if (!row) return;
@@ -874,7 +1104,7 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
     t.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
   });
 
-  renderTargets(false); renderTabs(); renderPresets(); renderFoods(); render(); renderHist();
+  renderTargets(false); renderTabs(); renderPresets(); renderFoods(); render(); renderHist(); renderMyList();
 })();
 </script>
 
