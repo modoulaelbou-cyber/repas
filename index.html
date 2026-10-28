@@ -201,6 +201,7 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
 .mylist li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
 .mylist li span { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
 /* Sauvegarde */
+.addbtn { min-height: 40px; padding: 6px 14px; font-size: 15px; }
 .backup { margin-top: 20px; display: flex; flex-direction: column; gap: 12px; }
 @media (prefers-reduced-motion: reduce) { .track i.sg { transition: none; } }
 </style>
@@ -235,14 +236,15 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
       </section>
 
       <section aria-label="Choix des aliments">
-        <div class="sect-title"><h2>Tes aliments</h2><small id="fhint"></small></div>
+        <div class="sect-title"><h2>Tes aliments</h2><button type="button" class="cta addbtn" id="addbtn">+ Ajouter un aliment</button></div>
+        <p class="tip" id="fhint" style="margin:-4px 0 10px"></p>
         <input id="q" class="search" type="search" placeholder="Rechercher : poulet, riz, skyr, huile, burger…" autocomplete="off">
         <div class="tabs" id="tabs" role="group" aria-label="Catégories"></div>
         <div id="foods"></div>
       </section>
 
       <details class="card addfood" id="addfood">
-        <summary>Ajouter un aliment <small>valeurs de l'étiquette</small></summary>
+        <summary>+ Ajouter un aliment <small>valeurs de l'étiquette</small></summary>
         <form id="ffood" autocomplete="off">
           <div class="fgrid">
             <div class="ff wide"><label for="fn">Nom</label><input id="fn" required maxlength="50" placeholder="Ex. : Skyr Siggi's vanille"></div>
@@ -743,7 +745,7 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
       any = true;
       html += '<div class="sec ' + S[2] + '" data-sec="' + S[0] + '"><h3 class="sech">' + S[1] + (n ? ' <b>' + n + ' coché' + (n > 1 ? 's' : '') + '</b>' : '') + '<small>' + S[3] + '</small></h3>' + secHtml + '</div>';
     });
-    $('#foods').innerHTML = any ? html : '<p class="empty">Aucun aliment ne correspond à « ' + esc(state.q) + ' ».</p>';
+    $('#foods').innerHTML = any ? html : '<div class="empty"><p class="tip">Aucun aliment ne correspond à « ' + esc(state.q) + ' ».</p><button type="button" class="cta" data-addq="1" style="margin-top:10px">+ Ajouter « ' + esc(state.q.trim()) + ' »</button></div>';
   }
   function renderTabs() {
     $('#tabs').innerHTML = [['all', 'Tout'], ['p', 'Protéines'], ['c', 'Glucides'], ['l', 'Lipides'], ['e', 'Extras']].map(function (t) {
@@ -819,7 +821,15 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
   }
 
   /* ---------- Événements ---------- */
+  function openAdd(name) {
+    var d = $('#addfood'); d.open = true;
+    if (name) $('#fn').value = name;
+    d.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(function () { $('#fn').focus(); }, 350);
+  }
+  $('#addbtn').addEventListener('click', function () { openAdd(''); });
   $('#foods').addEventListener('click', function (e) {
+    if (e.target.closest('[data-addq]')) { openAdd(state.q.trim()); return; }
     var b = e.target.closest('.chip'); if (!b) return;
     var s = state[state.meal], id = b.getAttribute('data-id'), i = s.sel.indexOf(id);
     if (i > -1) { s.sel.splice(i, 1); delete s.pins[id]; delete s.force[id]; } else { s.sel.push(id); touchRecent([id]); }
