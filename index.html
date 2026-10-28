@@ -246,6 +246,7 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
       <details class="card addfood" id="addfood">
         <summary>+ Ajouter un aliment <small>valeurs de l'étiquette</small></summary>
         <form id="ffood" autocomplete="off">
+          <p class="need" id="fmode" hidden style="margin-bottom:12px"></p>
           <div class="fgrid">
             <div class="ff wide"><label for="fn">Nom</label><input id="fn" required maxlength="50" placeholder="Ex. : Skyr Siggi's vanille"></div>
             <div class="ff wide"><label for="fs">Catégorie (ce que l'aliment apporte surtout)</label>
@@ -256,7 +257,7 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
             <div class="ff"><label for="fu">Poids d'une portion (g)</label><input id="fu" type="number" inputmode="decimal" min="0" step="1" placeholder="Optionnel"></div>
           </div>
           <p class="tip" style="margin-top:10px">Portion : remplis-la pour un aliment qui se compte (bouteille, pot, tranche). Laisse vide pour un aliment en grammes.</p>
-          <div class="actions" style="margin-top:12px"><button class="cta" type="submit">Ajouter</button></div>
+          <div class="actions" style="margin-top:12px"><button class="cta" type="submit" id="fsubmit">Ajouter</button><button class="mini" type="button" id="fcancel" hidden>Annuler</button><button class="mini" type="button" id="freset" hidden>Valeurs d'origine</button></div>
           <p class="flash" id="fflash" role="status"></p>
         </form>
         <ul class="mylist" id="mylist"></ul>
@@ -437,6 +438,28 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
   CUSTOM = CUSTOM.filter(function (c) { return c && c.id && c.name && 'pcle'.indexOf(c.sec) > -1; });
   CUSTOM.forEach(addCustom);
 
+  /* Aliments de base modifiés */
+  var OKEY = 'calculateur-repas-edits-v1', EDITS = lsGet(OKEY, {}), ORIG = {};
+  if (!EDITS || typeof EDITS !== 'object' || Array.isArray(EDITS)) EDITS = {};
+  function setUnit(it, u) {
+    u = +u || 0;
+    if (u > 0) { if (it.u) it.u = [it.u[0], it.u[1], u]; else { it.u = ['portion', 'portions', u]; it.def = 1; } }
+    else if (it.u) { delete it.u; it.def = DEFQ[it.sec]; }
+  }
+  function applyEdit(it, e) {
+    if (!ORIG[it.id]) ORIG[it.id] = { name: it.name, p: it.p, c: it.c, f: it.f, def: it.def, u: it.u ? it.u.slice() : null };
+    if (e.name) it.name = e.name;
+    it.p = +e.p || 0; it.c = +e.c || 0; it.f = +e.f || 0; setUnit(it, e.u);
+    it.kcal = it.p * 4 + it.c * 4 + it.f * 9; it.edited = true;
+  }
+  function restoreOrig(it) {
+    var o = ORIG[it.id]; if (!o) return;
+    it.name = o.name; it.p = o.p; it.c = o.c; it.f = o.f; it.def = o.def;
+    if (o.u) it.u = o.u.slice(); else delete it.u;
+    it.kcal = it.p * 4 + it.c * 4 + it.f * 9; delete it.edited;
+  }
+  D.forEach(function (it) { if (!it.mine && EDITS[it.id]) applyEdit(it, EDITS[it.id]); });
+
   var SECS = [['p', 'Protéines', 'sp', 'g de protéines / 100 g'], ['c', 'Glucides', 'sc', 'g de glucides / 100 g'], ['l', 'Lipides', 'sl', 'g de lipides / 100 g'], ['e', 'Extras', 'se', 'quantité fixe']];
   var SUBS = {
     p: [MY, 'Viandes', 'Poissons', 'Œufs & laitiers', 'Végétal & poudres'],
@@ -497,7 +520,7 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
     }
   } catch (e) {}
   state.saveDate = (function () { var d = new Date(), z = function (n) { return (n < 10 ? '0' : '') + n; }; return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()); })();
-  state.saveOpen = false; state.mealName = ''; state.mflash = ''; state.manage = false; state.mArm = '';
+  state.editId = ''; state.saveOpen = false; state.mealName = ''; state.mflash = ''; state.manage = false; state.mArm = '';
 
   /* Repas enregistrés + aliments récents */
   var MKEY = 'calculateur-repas-meals-v1', RKEY = 'calculateur-repas-recent-v1';
@@ -610,7 +633,8 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
       sub.push(nf(row.kcal) + ' kcal');
       sub.push('P ' + nf(row.p) + ' · G ' + nf(row.c) + ' · L ' + nf(row.f));
       var line = esc(sub.join(' · '));
-      if (it.note) line += ' · ' + esc(it.note);
+      if (it.note && !it.edited) line += ' · ' + esc(it.note);
+      if (it.edited) line += ' · valeurs modifiées';
       var tags = '', btn = '';
       if (row.auto) tags = '<span class="tag auto">Calculé</span>';
       else if (row.pinned) tags = '<span class="tag">Modifié</span>';
@@ -619,7 +643,7 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
       else if (it.sec === 'e' && row.pinned) btn += '<button class="mini" data-act="std" type="button">Quantité standard</button>';
       h += '<li class="row r' + it.sec + '" data-id="' + it.id + '"><div class="rname"><strong>' + esc(it.name) + '</strong><span class="sublin">' + line + '</span></div>' +
         '<div class="rqty"><input class="qin" type="number" inputmode="decimal" min="0" step="' + d.step + '" value="' + d.v + '" aria-label="Quantité : ' + esc(it.name) + '"><span class="qu">' + d.unit + '</span></div>' +
-        '<div class="rmeta">' + tags + btn + '<button class="mini" data-act="remove" type="button">Retirer</button></div></li>';
+        '<div class="rmeta">' + tags + btn + '<button class="mini" data-act="edit" type="button">Modifier</button><button class="mini" data-act="remove" type="button">Retirer</button></div></li>';
     });
     return h + '</ul>';
   }
@@ -797,7 +821,7 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
     var SN = { p: 'Protéines', c: 'Glucides', l: 'Lipides', e: 'Extra' };
     el.innerHTML = mine.map(function (it) {
       return '<li><div>' + esc(it.name) + '<br><span>' + SN[it.sec] + ' · P ' + nf(it.p, 1) + ' · G ' + nf(it.c, 1) + ' · L ' + nf(it.f, 1) + ' / 100 g' + (it.u ? ' · portion ' + nf(it.u[2]) + ' g' : '') + '</span></div>' +
-        '<button class="mini" type="button" data-fdel="' + esc(it.id) + '">' + (state.fArm === it.id ? 'Confirmer' : 'Supprimer') + '</button></li>';
+        '<span class="actions"><button class="mini" type="button" data-fedit="' + esc(it.id) + '">Modifier</button><button class="mini" type="button" data-fdel="' + esc(it.id) + '">' + (state.fArm === it.id ? 'Confirmer' : 'Supprimer') + '</button></span></li>';
     }).join('');
     el.hidden = !mine.length;
   }
@@ -821,7 +845,30 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
   }
 
   /* ---------- Événements ---------- */
+  function setMode(it) {
+    state.editId = it ? it.id : '';
+    $('#fmode').hidden = !it; $('#fmode').innerHTML = it ? 'Modification de <b>' + esc(it.name) + '</b>' + (it.mine ? '' : ' (aliment de base)') : '';
+    $('#fsubmit').textContent = it ? 'Enregistrer' : 'Ajouter';
+    $('#fcancel').hidden = !it; $('#freset').hidden = !(it && it.edited && !it.mine);
+    $('#fs').disabled = !!(it && !it.mine);
+    $('#addfood summary').firstChild.nodeValue = it ? 'Modifier un aliment ' : '+ Ajouter un aliment ';
+  }
+  function openEdit(id) {
+    var it = BY[id]; if (!it) return;
+    $('#ffood').reset(); $('#fflash').textContent = ''; setMode(it);
+    $('#fn').value = it.name; $('#fs').value = it.sec; $('#fp').value = it.p; $('#fc').value = it.c; $('#fl').value = it.f; $('#fu').value = it.u ? it.u[2] : '';
+    var d = $('#addfood'); d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function closeEdit() { $('#ffood').reset(); setMode(null); }
+  $('#fcancel').addEventListener('click', function () { closeEdit(); $('#fflash').textContent = ''; });
+  $('#freset').addEventListener('click', function () {
+    var it = BY[state.editId]; if (!it) return;
+    delete EDITS[it.id]; lsSet(OKEY, EDITS); restoreOrig(it);
+    var fl = $('#fflash'); fl.className = 'flash'; fl.textContent = '« ' + it.name + ' » remis aux valeurs d\'origine.';
+    closeEdit(); renderFoods(); renderMyList(); render();
+  });
   function openAdd(name) {
+    if (state.editId) closeEdit();
     var d = $('#addfood'); d.open = true;
     if (name) $('#fn').value = name;
     d.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -853,8 +900,21 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
     if (!name || [c.p, c.c, c.f].some(function (v) { return isNaN(v) || v < 0 || v > 100; }) || c.p + c.c + c.f > 100) {
       fl.className = 'flash err'; fl.textContent = 'Vérifie les valeurs : elles sont pour 100 g, et leur total ne peut pas dépasser 100.'; return;
     }
-    if (D.some(function (it) { return norm(it.name) === norm(name); })) { fl.className = 'flash err'; fl.textContent = 'Un aliment porte déjà ce nom.'; return; }
+    if (D.some(function (it) { return it.id !== state.editId && norm(it.name) === norm(name); })) { fl.className = 'flash err'; fl.textContent = 'Un aliment porte déjà ce nom.'; return; }
     if (c.sec !== 'e' && ({ p: c.p, c: c.c, l: c.f })[c.sec] <= 0) { fl.className = 'flash err'; fl.textContent = 'Cet aliment n\'apporte pas de ' + ({ p: 'protéines', c: 'glucides', l: 'lipides' })[c.sec] + ' : choisis une autre catégorie.'; return; }
+    if (state.editId) {
+      var it = BY[state.editId];
+      if (it.mine) {
+        var cc = CUSTOM.filter(function (x) { return x.id === it.id; })[0];
+        cc.name = c.name; cc.sec = c.sec; cc.p = c.p; cc.c = c.c; cc.f = c.f; cc.u = c.u; lsSet(FKEY, CUSTOM);
+        it.name = c.name; it.sec = c.sec; it.fix = c.sec === 'e'; it.p = c.p; it.c = c.c; it.f = c.f; setUnit(it, c.u);
+        it.kcal = it.p * 4 + it.c * 4 + it.f * 9;
+      } else {
+        restoreOrig(it); EDITS[it.id] = { name: c.name, p: c.p, c: c.c, f: c.f, u: c.u }; lsSet(OKEY, EDITS); applyEdit(it, EDITS[it.id]);
+      }
+      fl.className = 'flash'; fl.textContent = '« ' + it.name + ' » modifié. Les quantités sont recalculées.';
+      closeEdit(); save(); renderFoods(); renderMyList(); renderSaved(); render(); return;
+    }
     CUSTOM.push(c);
     if (!lsSet(FKEY, CUSTOM)) { CUSTOM.pop(); fl.className = 'flash err'; fl.textContent = 'Enregistrement impossible.'; return; }
     var it = addCustom(c); BY[it.id] = it;
@@ -862,6 +922,7 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
     renderFoods(); renderMyList();
   });
   $('#mylist').addEventListener('click', function (e) {
+    var be = e.target.closest('button[data-fedit]'); if (be) { openEdit(be.getAttribute('data-fedit')); return; }
     var b = e.target.closest('button[data-fdel]'); if (!b) return;
     var id = b.getAttribute('data-fdel');
     if (state.fArm !== id) { state.fArm = id; renderMyList(); return; }
@@ -877,7 +938,7 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
   function bmsg(t, err) { var el = $('#bflash'); el.className = 'flash' + (err ? ' err' : ''); el.textContent = t; }
   $('#bexp').addEventListener('click', async function () {
     var data = { app: 'calculateur-repas', v: 1, exportedAt: new Date().toISOString(),
-      state: { tgt: state.tgt, am: state.am, pm: state.pm }, meals: MEALS, foods: CUSTOM, recent: RECENT };
+      state: { tgt: state.tgt, am: state.am, pm: state.pm }, meals: MEALS, foods: CUSTOM, edits: EDITS, recent: RECENT };
     var name = 'repas-sauvegarde-' + state.saveDate + '.json', txt = JSON.stringify(data);
     try {
       var file = new File([txt], name, { type: 'application/json' });
@@ -903,6 +964,7 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
       meals.forEach(function (m) { if (m && m.id && Array.isArray(m.sel)) { MEALS = MEALS.filter(function (x) { return x.id !== m.id; }); MEALS.push(m); } });
       MEALS.sort(function (a, b) { return (b.at || 0) - (a.at || 0); }); lsSet(MKEY, MEALS);
       if (Array.isArray(d.recent)) lsSet(RKEY, d.recent);
+      if (d.edits && typeof d.edits === 'object') { for (var k in d.edits) EDITS[k] = d.edits[k]; lsSet(OKEY, EDITS); }
       if (d.state && d.state.tgt) lsSet(KEY, { tgt: d.state.tgt, meal: state.meal, am: d.state.am || state.am, pm: d.state.pm || state.pm });
       bmsg('Importé : ' + meals.length + ' repas, ' + foods.length + ' aliment(s). Rechargement…');
       setTimeout(function () { location.reload(); }, 900);
@@ -951,6 +1013,7 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
     if (act === 'clear') { s.sel = []; s.pins = {}; s.force = {}; save(); renderFoods(); render(); return; }
     var row = b.closest('.row'); if (!row) return;
     var id = row.getAttribute('data-id');
+    if (act === 'edit') { openEdit(id); return; }
     if (act === 'remove') { s.sel.splice(s.sel.indexOf(id), 1); delete s.pins[id]; delete s.force[id]; renderFoods(); }
     if (act === 'calc') { delete s.pins[id]; s.force[id] = true; }
     if (act === 'std') { delete s.pins[id]; }
