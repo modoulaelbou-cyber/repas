@@ -255,8 +255,9 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
             <div class="ff"><label for="fc">Glucides / 100 g</label><input id="fc" type="number" inputmode="decimal" min="0" max="100" step="0.1" required></div>
             <div class="ff"><label for="fl">Lipides / 100 g</label><input id="fl" type="number" inputmode="decimal" min="0" max="100" step="0.1" required></div>
             <div class="ff"><label for="fu">Poids d'une portion (g)</label><input id="fu" type="number" inputmode="decimal" min="0" step="1" placeholder="Optionnel"></div>
+            <div class="ff"><label for="fm">Maximum par repas</label><input id="fm" type="number" inputmode="decimal" min="0" step="1" placeholder="Optionnel"></div>
           </div>
-          <p class="tip" style="margin-top:10px">Portion : remplis-la pour un aliment qui se compte (bouteille, pot, tranche). Laisse vide pour un aliment en grammes.</p>
+          <p class="tip" style="margin-top:10px">Portion : remplis-la pour un aliment qui se compte (bouteille, pot, tranche). Laisse vide pour un aliment en grammes. Maximum : en portions si l'aliment se compte, sinon en grammes. L'appli ne proposera jamais plus.</p>
           <div class="actions" style="margin-top:12px"><button class="cta" type="submit" id="fsubmit">Ajouter</button><button class="mini" type="button" id="fcancel" hidden>Annuler</button><button class="mini" type="button" id="freset" hidden>Valeurs d'origine</button></div>
           <p class="flash" id="fflash" role="status"></p>
         </form>
@@ -425,15 +426,34 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
   add('biere', 'Bière (canette)', 'e', PL, 0.3, 3.5, 0, 1, { u: ['canette', 'canettes', 330] });
   D.forEach(function (it) { it.kcal = it.p * 4 + it.c * 4 + it.f * 9; });
 
+  /* Maximum raisonnable par repas : en pièces pour les aliments qui se comptent, en grammes sinon */
+  var MAXU = {
+    poulet: 250, cuisse: 250, dinde: 250, dindehachee: 250, boeuf5: 250, boeuf15: 200, steak: 250, porc: 250, veau: 250, agneau: 200,
+    kebab: 200, nuggets: 200, cordon: 2, jambon: 6, saumon: 200, cabillaud: 250, colin: 250, truite: 200, thon: 2, sardines: 200,
+    crevettes: 250, surimi: 150, oeuf: 5, blanc: 8, skyr: 400, skyrboire: 2, fb0: 400, fb3: 400, cottage: 300, yaourtgrec: 400,
+    tofu: 250, tempeh: 200, seitan: 200, whey: 2,
+    riz: 150, rizcomplet: 150, pates: 150, patescompletes: 150, patate: 500, patatedouce: 500, semoule: 150, boulgour: 150,
+    quinoa: 120, lentilles: 120, poischiches: 250, haricotsrouges: 250, flocons: 100, frites: 300, gnocchis: 300, mais: 200,
+    brioche: 2, burgerclassic: 2, baguette: 150, mie: 4, complet: 4, wrap: 2, pita: 2, bagel: 2, naan: 2, biscottes: 6, pate: 1,
+    banane: 2, pomme: 2, orange: 2, kiwi: 3, fruitsrouges: 250, raisin: 200, mangue: 250, dattes: 6,
+    miel: 40, confiture: 40, cornflakes: 80, muesli: 100, galetteriz: 6, compote: 200,
+    huile: 25, beurre: 25, bpc: 40, amandes: 40, noix: 40, cajou: 40, noisettes: 40, cacahuetes: 40,
+    emmental: 60, mozza: 125, cheddar: 3, chevre: 60, feta: 80, parmesan: 30, comte: 50,
+    avocat: 2, mayo: 30, cremelegere: 60, chocolat: 40, nutella: 30, olives: 60, lardons: 100
+  };
+  D.forEach(function (it) { var m = MAXU[it.id]; if (m != null) it.max = it.u ? m * it.u[2] : m; });
+
   /* Aliments perso (ajoutés depuis une étiquette) */
   var MY = 'Mes aliments', FKEY = 'calculateur-repas-foods-v1', DEFQ = { p: 150, c: 80, l: 15, e: 100 };
   function lsGet(k, fb) { try { var r = JSON.parse(localStorage.getItem(k)); return r == null ? fb : r; } catch (e) { return fb; } }
   function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+  function setMax(it, m) { m = +m || 0; if (m > 0) it.max = it.u ? m * it.u[2] : m; else delete it.max; }
+  function maxShown(it) { var m = it.max != null ? it.max : it.u ? 3 * it.u[2] : null; return m == null ? '' : it.u ? Math.round(m / it.u[2] * 10) / 10 : Math.round(m); }
   var CUSTOM = lsGet(FKEY, []); if (!Array.isArray(CUSTOM)) CUSTOM = [];
   function addCustom(c) {
     var u = +c.u > 0 ? +c.u : 0;
     add(c.id, c.name, c.sec, MY, +c.p || 0, +c.c || 0, +c.f || 0, u ? 1 : DEFQ[c.sec], u ? { u: ['portion', 'portions', u], mine: true } : { mine: true });
-    var it = D[D.length - 1]; it.kcal = it.p * 4 + it.c * 4 + it.f * 9; return it;
+    var it = D[D.length - 1]; it.kcal = it.p * 4 + it.c * 4 + it.f * 9; setMax(it, c.max); return it;
   }
   CUSTOM = CUSTOM.filter(function (c) { return c && c.id && c.name && 'pcle'.indexOf(c.sec) > -1; });
   CUSTOM.forEach(addCustom);
@@ -447,15 +467,17 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
     else if (it.u) { delete it.u; it.def = DEFQ[it.sec]; }
   }
   function applyEdit(it, e) {
-    if (!ORIG[it.id]) ORIG[it.id] = { name: it.name, p: it.p, c: it.c, f: it.f, def: it.def, u: it.u ? it.u.slice() : null };
+    if (!ORIG[it.id]) ORIG[it.id] = { name: it.name, p: it.p, c: it.c, f: it.f, def: it.def, u: it.u ? it.u.slice() : null, max: it.max };
     if (e.name) it.name = e.name;
     it.p = +e.p || 0; it.c = +e.c || 0; it.f = +e.f || 0; setUnit(it, e.u);
+    if (+e.max > 0) setMax(it, e.max); else if (ORIG[it.id].max != null) it.max = ORIG[it.id].max; else delete it.max;
     it.kcal = it.p * 4 + it.c * 4 + it.f * 9; it.edited = true;
   }
   function restoreOrig(it) {
     var o = ORIG[it.id]; if (!o) return;
     it.name = o.name; it.p = o.p; it.c = o.c; it.f = o.f; it.def = o.def;
     if (o.u) it.u = o.u.slice(); else delete it.u;
+    if (o.max != null) it.max = o.max; else delete it.max;
     it.kcal = it.p * 4 + it.c * 4 + it.f * 9; delete it.edited;
   }
   D.forEach(function (it) { if (!it.mine && EDITS[it.id]) applyEdit(it, EDITS[it.id]); });
@@ -472,7 +494,7 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
   var SECOF = { p: 'p', c: 'c', f: 'l' };
   var TOL = { p: 5, c: 10, f: 4 };
   var EX = { p: 'poulet, œufs, skyr…', c: 'riz, pommes de terre, pâtes…', f: 'huile d\'olive, beurre de cacahuète, amandes…' };
-  var CAPDEF = { p: 600, c: 700, l: 80, e: 1000 };
+  var CAPDEF = { p: 250, c: 200, l: 40, e: 1000 };
   var PRESETS = {
     am: [
       ['Œufs + pain + beurre', ['oeuf', 'complet', 'beurre']],
@@ -540,7 +562,7 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
   function norm(s) { return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
   function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
   function has(id) { return state[state.meal].sel.indexOf(id) > -1; }
-  function cap(it) { return it.max != null ? it.max : CAPDEF[it.sec]; }
+  function cap(it) { return it.max != null ? it.max : it.u ? 3 * it.u[2] : CAPDEF[it.sec]; }
   function defQty(it) { return it.u ? it.def * it.u[2] : it.def; }
   function secVal(it) { return it.sec === 'p' ? it.p : it.sec === 'c' ? it.c : it.sec === 'l' ? it.f : 0; }
   function kcalOf(t) { return t.p * 4 + t.c * 4 + t.f * 9; }
@@ -635,6 +657,7 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
       var line = esc(sub.join(' · '));
       if (it.note && !it.edited) line += ' · ' + esc(it.note);
       if (it.edited) line += ' · valeurs modifiées';
+      if (row.auto && row.g >= cap(it) - 0.5) line += ' · maximum par repas atteint';
       var tags = '', btn = '';
       if (row.auto) tags = '<span class="tag auto">Calculé</span>';
       else if (row.pinned) tags = '<span class="tag">Modifié</span>';
@@ -856,7 +879,7 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
   function openEdit(id) {
     var it = BY[id]; if (!it) return;
     $('#ffood').reset(); $('#fflash').textContent = ''; setMode(it);
-    $('#fn').value = it.name; $('#fs').value = it.sec; $('#fp').value = it.p; $('#fc').value = it.c; $('#fl').value = it.f; $('#fu').value = it.u ? it.u[2] : '';
+    $('#fn').value = it.name; $('#fs').value = it.sec; $('#fp').value = it.p; $('#fc').value = it.c; $('#fl').value = it.f; $('#fu').value = it.u ? it.u[2] : ''; $('#fm').value = maxShown(it);
     var d = $('#addfood'); d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   function closeEdit() { $('#ffood').reset(); setMode(null); }
@@ -896,7 +919,7 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
   $('#ffood').addEventListener('submit', function (e) {
     e.preventDefault();
     var name = $('#fn').value.trim(), fl = $('#fflash');
-    var c = { id: 'u' + Date.now(), name: name, sec: $('#fs').value, p: parseFloat($('#fp').value), c: parseFloat($('#fc').value), f: parseFloat($('#fl').value), u: parseFloat($('#fu').value) || 0 };
+    var c = { id: 'u' + Date.now(), name: name, sec: $('#fs').value, p: parseFloat($('#fp').value), c: parseFloat($('#fc').value), f: parseFloat($('#fl').value), u: parseFloat($('#fu').value) || 0, max: parseFloat($('#fm').value) || 0 };
     if (!name || [c.p, c.c, c.f].some(function (v) { return isNaN(v) || v < 0 || v > 100; }) || c.p + c.c + c.f > 100) {
       fl.className = 'flash err'; fl.textContent = 'Vérifie les valeurs : elles sont pour 100 g, et leur total ne peut pas dépasser 100.'; return;
     }
@@ -906,11 +929,11 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
       var it = BY[state.editId];
       if (it.mine) {
         var cc = CUSTOM.filter(function (x) { return x.id === it.id; })[0];
-        cc.name = c.name; cc.sec = c.sec; cc.p = c.p; cc.c = c.c; cc.f = c.f; cc.u = c.u; lsSet(FKEY, CUSTOM);
-        it.name = c.name; it.sec = c.sec; it.fix = c.sec === 'e'; it.p = c.p; it.c = c.c; it.f = c.f; setUnit(it, c.u);
+        cc.name = c.name; cc.sec = c.sec; cc.p = c.p; cc.c = c.c; cc.f = c.f; cc.u = c.u; cc.max = c.max; lsSet(FKEY, CUSTOM);
+        it.name = c.name; it.sec = c.sec; it.fix = c.sec === 'e'; it.p = c.p; it.c = c.c; it.f = c.f; setUnit(it, c.u); setMax(it, c.max);
         it.kcal = it.p * 4 + it.c * 4 + it.f * 9;
       } else {
-        restoreOrig(it); EDITS[it.id] = { name: c.name, p: c.p, c: c.c, f: c.f, u: c.u }; lsSet(OKEY, EDITS); applyEdit(it, EDITS[it.id]);
+        restoreOrig(it); EDITS[it.id] = { name: c.name, p: c.p, c: c.c, f: c.f, u: c.u, max: c.max }; lsSet(OKEY, EDITS); applyEdit(it, EDITS[it.id]);
       }
       fl.className = 'flash'; fl.textContent = '« ' + it.name + ' » modifié. Les quantités sont recalculées.';
       closeEdit(); save(); renderFoods(); renderMyList(); renderSaved(); render(); return;
