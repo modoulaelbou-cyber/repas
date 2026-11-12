@@ -37,6 +37,7 @@
   --bad: #FF8A7A; --ok: #5BD494; --accent: #8EA2FF; color-scheme: dark;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body {
   margin: 0; background: var(--bg); color: var(--ink); font: 400 16px/1.45 var(--body);
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
@@ -203,6 +204,74 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
 /* Sauvegarde */
 .addbtn { min-height: 40px; padding: 6px 14px; font-size: 15px; }
 .backup { margin-top: 20px; display: flex; flex-direction: column; gap: 12px; }
+/* Navigation */
+.nav { position: sticky; top: 0; z-index: 6; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 16px 0 0; padding: 4px; background: var(--surface2); border-radius: 10px; }
+.nav button { min-height: 44px; border: 0; background: transparent; border-radius: 7px; font-weight: 600; }
+.nav button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+body:not([data-view="repas"]) .bar { display: none; }
+.view { display: flex; flex-direction: column; gap: 18px; margin-top: 18px; }
+.view > .card { margin: 0; }
+/* Pastilles d'activité */
+.tchips { display: flex; flex-wrap: wrap; gap: 6px; }
+.tchip { min-height: 38px; padding: 4px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); font-size: 14px; font-weight: 500; }
+.tchip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+.tchip.work[aria-pressed="true"] { background: var(--cc); border-color: var(--cc); color: var(--on); }
+.badge { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; background: var(--surface2); color: var(--muted); }
+.badge.auto { background: var(--ink); color: var(--bg); }
+.dayline { display: flex; flex-direction: column; gap: 8px; margin: 0 0 16px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.dayline .lab { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 14px; color: var(--muted); }
+.dayline .lab b { color: var(--ink); }
+.gfb { --gc: var(--ok); }
+.ck { display: inline-flex; align-items: baseline; gap: 4px; font-size: 13px; color: var(--muted); }
+.qck { width: 4.2ch; text-align: right; border: 0; border-bottom: 2px solid var(--line); background: transparent; font: 700 18px/1.1 var(--display); padding: 0; outline: none; -moz-appearance: textfield; }
+.qck:focus { border-color: var(--accent); }
+.qck::-webkit-outer-spin-button, .qck::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+/* Qualité */
+.qual summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.qual summary::-webkit-details-marker { display: none; }
+.qual summary b { font: 700 32px/1 var(--display); font-variant-numeric: tabular-nums; }
+.qual summary b small { font-size: 18px; color: var(--muted); }
+.qlist { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 8px; font-size: 14px; }
+.qlist li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; }
+.qlist li span { color: var(--muted); font-variant-numeric: tabular-nums; }
+.qlist .track { grid-column: 1 / -1; height: 6px; }
+.water { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 14px; color: var(--muted); }
+.water input { width: 6ch; min-height: 40px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+/* Profil */
+.seg2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: var(--surface2); padding: 4px; border-radius: 8px; }
+.seg2 button { min-height: 38px; border: 0; background: transparent; border-radius: 6px; font-weight: 600; }
+.seg2 button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.goalsel { display: grid; gap: 8px; }
+.goalsel button { text-align: left; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); display: flex; flex-direction: column; gap: 2px; }
+.goalsel button b { font-size: 16px; }
+.goalsel button span { font-size: 13px; color: var(--muted); }
+.goalsel button[aria-pressed="true"] { border: 2px solid var(--ink); padding: 11px 13px; }
+.plan { display: grid; gap: 12px; }
+.plan .pd { display: grid; gap: 6px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.plan .pd:last-child { border-bottom: 0; padding-bottom: 0; }
+.plan .pd h4 { margin: 0; font-size: 14px; display: flex; justify-content: space-between; gap: 8px; }
+.plan .pd h4 span { color: var(--muted); font-weight: 500; }
+.kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; }
+.kv div { display: flex; flex-direction: column; gap: 2px; }
+.kv span { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.kv b { font: 700 28px/1 var(--display); font-variant-numeric: tabular-nums; }
+.kv small { font-size: 13px; color: var(--muted); }
+.dtable { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+.dtable td, .dtable th { padding: 8px 4px; border-bottom: 1px solid var(--line); text-align: right; }
+.dtable td:first-child, .dtable th:first-child { text-align: left; }
+.dtable th { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+.dtable tr.today td { font-weight: 700; }
+.check { margin: 0; font-size: 13px; color: var(--ok); font-variant-numeric: tabular-nums; }
+/* Suivi */
+.chart svg { width: 100%; height: auto; display: block; }
+.chart .leg { display: flex; gap: 14px; font-size: 13px; color: var(--muted); flex-wrap: wrap; }
+.chart .leg i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.mlist { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.mlist li { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; font-variant-numeric: tabular-nums; }
+.mlist li span { color: var(--muted); }
+.adj { border-left: 4px solid var(--line); padding-left: 12px; display: flex; flex-direction: column; gap: 10px; }
+.adj.up, .adj.down { border-color: var(--cc); } .adj.ok, .adj.win { border-color: var(--ok); }
+.adj p { margin: 0; }
 @media (prefers-reduced-motion: reduce) { .track i.sg { transition: none; } }
 </style>
 </head>
@@ -211,16 +280,27 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
   <header>
     <p class="eyebrow">Nutrition · valeurs moyennes estimées</p>
     <h1>Calculateur de repas</h1>
-    <p class="lede">Fixe tes objectifs de la journée, puis coche tes sources : chaque repas vise la moitié de ta journée, et le soir s'ajuste si tu modifies le matin. Enregistre tes repas habituels pour les recocher en un tap.</p>
+    <p class="lede">Tes besoins sont calculés selon ton profil et ton entraînement du jour. Coche tes sources : chaque repas vise la moitié de ta journée, et le soir s'ajuste si tu modifies le matin.</p>
   </header>
 
+  <nav class="nav" id="nav" aria-label="Navigation">
+    <button type="button" data-v="repas" aria-pressed="true">Repas</button>
+    <button type="button" data-v="profil" aria-pressed="false">Profil</button>
+    <button type="button" data-v="suivi" aria-pressed="false">Suivi</button>
+  </nav>
+
+  <div id="v-repas">
+
   <section class="card goals" aria-label="Objectifs de la journée">
-    <div class="sect-title"><h2>Objectifs de la journée</h2><button type="button" class="mini" id="reset">Valeurs de départ</button></div>
+    <div class="dayline" id="dayline"></div>
+    <div class="sect-title"><h2>Objectifs du jour <span class="badge" id="tbadge"></span></h2><button type="button" class="mini" id="reset">Valeurs de départ</button></div>
+    <p class="tip" id="thint" hidden style="margin:-4px 0 12px"></p>
     <div class="goalgrid">
       <div class="goal gp"><label for="tp">Protéines</label><div class="num"><input id="tp" type="number" inputmode="numeric" min="0" max="500" step="1"><span>g</span></div><div class="gk" id="kp"></div></div>
       <div class="goal gc"><label for="tc">Glucides</label><div class="num"><input id="tc" type="number" inputmode="numeric" min="0" max="900" step="1"><span>g</span></div><div class="gk" id="kc"></div></div>
       <div class="goal gl"><label for="tf">Lipides</label><div class="num"><input id="tf" type="number" inputmode="numeric" min="0" max="300" step="1"><span>g</span></div><div class="gk" id="kf"></div></div>
       <div class="goal gt"><label>Total</label><div class="tot"><b id="kt"></b><span>kcal / jour</span></div><div class="gk">4 kcal par g de protéines ou glucides, 9 par g de lipides</div></div>
+      <div class="goal gfb"><label>Fibres</label><div class="tot"><b id="kfb"></b><span>g</span></div><div class="gk">14 g pour 1 000 kcal</div></div>
     </div>
   </section>
 
@@ -254,6 +334,7 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
             <div class="ff"><label for="fp">Protéines / 100 g</label><input id="fp" type="number" inputmode="decimal" min="0" max="100" step="0.1" required></div>
             <div class="ff"><label for="fc">Glucides / 100 g</label><input id="fc" type="number" inputmode="decimal" min="0" max="100" step="0.1" required></div>
             <div class="ff"><label for="fl">Lipides / 100 g</label><input id="fl" type="number" inputmode="decimal" min="0" max="100" step="0.1" required></div>
+            <div class="ff"><label for="ffb">Fibres / 100 g</label><input id="ffb" type="number" inputmode="decimal" min="0" max="100" step="0.1" placeholder="Optionnel"></div>
             <div class="ff"><label for="fu">Poids d'une portion (g)</label><input id="fu" type="number" inputmode="decimal" min="0" step="1" placeholder="Optionnel"></div>
             <div class="ff"><label for="fm">Maximum par repas</label><input id="fm" type="number" inputmode="decimal" min="0" step="1" placeholder="Optionnel"></div>
           </div>
@@ -267,18 +348,69 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
 
     <aside id="result" class="result" aria-live="polite"></aside>
   </div>
+  </div>
+
+  <div id="v-profil" class="view" hidden>
+    <section class="card" aria-label="Mon profil">
+      <div class="sect-title"><h2>Mon profil</h2><small>Reste uniquement sur ce téléphone</small></div>
+      <div class="fgrid">
+        <div class="ff wide"><label>Sexe</label><div class="seg2" id="psex"><button type="button" data-v="h" aria-pressed="false">Homme</button><button type="button" data-v="f" aria-pressed="false">Femme</button></div></div>
+        <div class="ff"><label for="page">Âge</label><input id="page" type="number" inputmode="numeric" min="16" max="90" step="1"></div>
+        <div class="ff"><label for="pheight">Taille (cm)</label><input id="pheight" type="number" inputmode="numeric" min="130" max="230" step="1"></div>
+        <div class="ff"><label for="pweight">Poids actuel (kg)</label><input id="pweight" type="number" inputmode="decimal" min="35" max="250" step="0.1"></div>
+        <div class="ff"><label for="pgoalw">Objectif de poids (kg)</label><input id="pgoalw" type="number" inputmode="decimal" min="35" max="250" step="0.1" placeholder="Facultatif"></div>
+        <div class="ff"><label for="psteps">Pas par jour (moyenne)</label><input id="psteps" type="number" inputmode="numeric" min="0" max="50000" step="500" placeholder="Ex. : 8000"></div>
+        <div class="ff"><label for="pdur">Durée d'une séance (min)</label><input id="pdur" type="number" inputmode="numeric" min="15" max="240" step="5"></div>
+        <div class="ff wide"><label for="pjob">Activité professionnelle (les jours de travail)</label><select id="pjob"></select></div>
+      </div>
+      <p class="flash err" id="perr" style="margin-top:10px"></p>
+    </section>
+
+    <section class="card" aria-label="Objectif">
+      <div class="sect-title"><h2>Objectif</h2></div>
+      <div class="goalsel" id="pgoal"></div>
+    </section>
+
+    <section class="card" aria-label="Ma semaine">
+      <div class="sect-title"><h2>Ma semaine</h2><small>Plusieurs activités possibles le même jour</small></div>
+      <div class="plan" id="plan"></div>
+      <p class="tip" style="margin-top:12px">Séance décalée ou muscu en plus un jour de MMA ? Change seulement le jour même, en haut de l'onglet Repas.</p>
+    </section>
+
+    <section class="card" id="pres" aria-label="Mes besoins" aria-live="polite"></section>
 
   <section class="card backup" aria-label="Sauvegarde">
-    <div class="sect-title"><h2>Sauvegarde</h2><small>Repas, aliments perso et objectifs</small></div>
-    <p class="tip">Tout est gardé sur ce téléphone. Exporte un fichier de temps en temps : si tu vides Safari ou changes de téléphone, tu le réimportes et tu récupères tes repas et tes aliments.</p>
+    <div class="sect-title"><h2>Sauvegarde</h2><small>Profil, suivi, repas, aliments</small></div>
+    <p class="tip">Tout est gardé sur ce téléphone, rien n'est envoyé ailleurs. Exporte un fichier de temps en temps : si tu vides Safari ou changes de téléphone, tu le réimportes et tu récupères tout.</p>
     <div class="actions"><button class="cta" type="button" id="bexp">Exporter</button><button class="mini" type="button" id="bimp">Importer un fichier</button></div>
     <input type="file" id="fimp" accept="application/json,.json" hidden>
     <p class="flash" id="bflash" role="status"></p>
   </section>
+  </div>
+
+  <div id="v-suivi" class="view" hidden>
+    <section class="card" aria-label="Nouvelle mesure">
+      <div class="sect-title"><h2>Nouvelle mesure</h2><small>Le matin, à jeun, après les toilettes</small></div>
+      <form id="fbody" autocomplete="off">
+        <div class="fgrid">
+          <div class="ff"><label for="bd">Date</label><input id="bd" type="date" required></div>
+          <div class="ff"><label for="bw">Poids (kg)</label><input id="bw" type="number" inputmode="decimal" min="35" max="250" step="0.1"></div>
+          <div class="ff"><label for="bt">Tour de taille (cm)</label><input id="bt" type="number" inputmode="decimal" min="40" max="200" step="0.5" placeholder="Facultatif"></div>
+          <div class="ff"><label for="bp">Performances</label><select id="bp"><option value="">Non renseigné</option><option value="up">En progrès</option><option value="flat">Stables</option><option value="down">En baisse</option></select></div>
+        </div>
+        <div class="actions" style="margin-top:12px"><button class="cta" type="submit">Enregistrer</button></div>
+        <p class="flash" id="bflash2" role="status"></p>
+      </form>
+    </section>
+    <section class="card" id="sadj" aria-label="Analyse" aria-live="polite"></section>
+    <section class="card chart" id="schart" aria-label="Graphiques"></section>
+    <section class="card" id="slist" aria-label="Mesures"></section>
+  </div>
 </div>
 
 <div class="bar" id="bar"></div>
 
+<script src="nutrition.js"></script>
 <script>
 (function () {
   /* ---------- Données : g pour 100 g (P = protéines, C = glucides, F = lipides) ---------- */
@@ -443,6 +575,34 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
   };
   D.forEach(function (it) { var m = MAXU[it.id]; if (m != null) it.max = it.u ? m * it.u[2] : m; });
 
+  /* Fibres (g / 100 g, moyennes type table Ciqual) */
+  var FIB = {
+    kebab: 0.5, nuggets: 1, cordon: 1, surimi: 0.5, tofu: 1, tempeh: 5, seitan: 0.6,
+    riz: 1.3, rizcomplet: 3.5, pates: 3, patescompletes: 8, patate: 1.8, patatedouce: 3, semoule: 3.5, boulgour: 8, quinoa: 7,
+    lentilles: 11, poischiches: 5, haricotsrouges: 6, flocons: 10, frites: 2.5, gnocchis: 1.5, mais: 2.5,
+    brioche: 2.5, burgerclassic: 2.5, baguette: 3, mie: 3, complet: 6, wrap: 3, pita: 2.5, bagel: 2.5, naan: 2, biscottes: 4, pate: 1.5,
+    banane: 2, pomme: 2, orange: 2, kiwi: 3, fruitsrouges: 4, raisin: 1, mangue: 1.8, dattes: 7,
+    confiture: 1, cornflakes: 3, muesli: 8, galetteriz: 3, compote: 1.5,
+    bpc: 6, amandes: 12, noix: 6.5, cajou: 3.3, noisettes: 10, cacahuetes: 8.5, avocat: 6.7, chocolat: 11, nutella: 3, olives: 3,
+    brocoli: 2.6, haricotsverts: 3, salade: 1.5, tomate: 1.2, oignon: 1.7, carotte: 2.7, courgette: 1, champignons: 1.5, poivron: 2,
+    epinards: 2.2, choufleur: 2, concombre: 0.6, aubergine: 2.5, petitspois: 5, poelee: 3,
+    ketchup: 0.3, sauceburger: 0.3, moutarde: 3, saucetomate: 1.5, bbq: 0.5, cornichons: 1.5, soja: 0.5, glace: 0.5, cookie: 2.5, chips: 4, pizza: 2
+  };
+  var GOODFAT = { huile: 1, bpc: 1, amandes: 1, noix: 1, cajou: 1, noisettes: 1, cacahuetes: 1, avocat: 1, olives: 1, saumon: 1, truite: 1, sardines: 1 };
+  var SATFAT = { beurre: 1, emmental: 1, mozza: 1, cheddar: 1, chevre: 1, feta: 1, parmesan: 1, comte: 1, cremelegere: 1, lardons: 1, boeuf15: 1, agneau: 1, kebab: 1, sauceburger: 1, sauceblanche: 1 };
+  var LEGUM = { lentilles: 1, poischiches: 1, haricotsrouges: 1 };
+  D.forEach(function (it) {
+    it.fib = FIB[it.id] || 0;
+    if (it.b === 'cru' && it.sub === V) it.cook = 0.75;      // une viande perd environ 25 % de son poids à la cuisson
+    if (it.b === 'cru' && it.sub === PO) it.cook = 0.8;      // un poisson environ 20 %
+  });
+  function tagsOf(it) {
+    var pg = null;
+    if (it.sub === V) pg = 'viande'; else if (it.sub === PO) pg = 'poisson'; else if (it.sub === OL || it.id === 'whey') pg = 'oeuf-laitier';
+    else if (it.sub === VG || LEGUM[it.id]) pg = 'vegetal'; else if (it.mine && it.sec === 'p') pg = 'autre';
+    return { kind: it.sub === FR ? 'fruit' : it.sub === LE ? 'veg' : null, pgroup: pg, fat: GOODFAT[it.id] ? 'good' : SATFAT[it.id] ? 'sat' : null };
+  }
+
   /* Aliments perso (ajoutés depuis une étiquette) */
   var MY = 'Mes aliments', FKEY = 'calculateur-repas-foods-v1', DEFQ = { p: 150, c: 80, l: 15, e: 100 };
   function lsGet(k, fb) { try { var r = JSON.parse(localStorage.getItem(k)); return r == null ? fb : r; } catch (e) { return fb; } }
@@ -453,7 +613,7 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
   function addCustom(c) {
     var u = +c.u > 0 ? +c.u : 0;
     add(c.id, c.name, c.sec, MY, +c.p || 0, +c.c || 0, +c.f || 0, u ? 1 : DEFQ[c.sec], u ? { u: ['portion', 'portions', u], mine: true } : { mine: true });
-    var it = D[D.length - 1]; it.kcal = it.p * 4 + it.c * 4 + it.f * 9; setMax(it, c.max); return it;
+    var it = D[D.length - 1]; it.kcal = it.p * 4 + it.c * 4 + it.f * 9; it.fib = +c.fb || 0; setMax(it, c.max); return it;
   }
   CUSTOM = CUSTOM.filter(function (c) { return c && c.id && c.name && 'pcle'.indexOf(c.sec) > -1; });
   CUSTOM.forEach(addCustom);
@@ -467,9 +627,10 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
     else if (it.u) { delete it.u; it.def = DEFQ[it.sec]; }
   }
   function applyEdit(it, e) {
-    if (!ORIG[it.id]) ORIG[it.id] = { name: it.name, p: it.p, c: it.c, f: it.f, def: it.def, u: it.u ? it.u.slice() : null, max: it.max };
+    if (!ORIG[it.id]) ORIG[it.id] = { name: it.name, p: it.p, c: it.c, f: it.f, def: it.def, u: it.u ? it.u.slice() : null, max: it.max, fib: it.fib };
     if (e.name) it.name = e.name;
     it.p = +e.p || 0; it.c = +e.c || 0; it.f = +e.f || 0; setUnit(it, e.u);
+    if (e.fb != null && e.fb !== '') it.fib = +e.fb || 0; else it.fib = ORIG[it.id].fib || 0;
     if (+e.max > 0) setMax(it, e.max); else if (ORIG[it.id].max != null) it.max = ORIG[it.id].max; else delete it.max;
     it.kcal = it.p * 4 + it.c * 4 + it.f * 9; it.edited = true;
   }
@@ -478,6 +639,7 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
     it.name = o.name; it.p = o.p; it.c = o.c; it.f = o.f; it.def = o.def;
     if (o.u) it.u = o.u.slice(); else delete it.u;
     if (o.max != null) it.max = o.max; else delete it.max;
+    it.fib = o.fib || 0;
     it.kcal = it.p * 4 + it.c * 4 + it.f * 9; delete it.edited;
   }
   D.forEach(function (it) { if (!it.mine && EDITS[it.id]) applyEdit(it, EDITS[it.id]); });
@@ -490,9 +652,9 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
     e: [MY, 'Légumes', 'Sauces', 'Plaisir']
   };
   var MK = { p: 'p', c: 'c', l: 'f' };          // macro portée par chaque section
-  var NAMES = { p: 'protéines', c: 'glucides', f: 'lipides' };
+  var NAMES = { p: 'protéines', c: 'glucides', f: 'lipides', fib: 'fibres' };
   var SECOF = { p: 'p', c: 'c', f: 'l' };
-  var TOL = { p: 5, c: 10, f: 4 };
+  var TOL = { p: 5, c: 10, f: 4, fib: 100 };
   var EX = { p: 'poulet, œufs, skyr…', c: 'riz, pommes de terre, pâtes…', f: 'huile d\'olive, beurre de cacahuète, amandes…' };
   var CAPDEF = { p: 250, c: 200, l: 40, e: 1000 };
   var PRESETS = {
@@ -538,10 +700,15 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
           }
         });
         if (s.meal === 'am' || s.meal === 'pm') state.meal = s.meal;
+        if (s.day && typeof s.day === 'object') state.day = s.day;
       }
     }
   } catch (e) {}
   state.saveDate = (function () { var d = new Date(), z = function (n) { return (n < 10 ? '0' : '') + n; }; return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()); })();
+  var DKEYS = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'];
+  state.todayKey = DKEYS[new Date().getDay()];
+  if (!state.day || state.day.date !== state.saveDate) state.day = { date: state.saveDate, acts: null, work: null, water: 0 };
+  state.ndArm = false; state.qOpen = false; state.view = 'repas'; state.fibGoal = 30;
   state.editId = ''; state.saveOpen = false; state.mealName = ''; state.mflash = ''; state.manage = false; state.mArm = '';
 
   /* Repas enregistrés + aliments récents */
@@ -553,7 +720,32 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
     RECENT = RECENT.slice(0, 16); lsSet(RKEY, RECENT);
   }
   function save() {
-    try { localStorage.setItem(KEY, JSON.stringify({ tgt: state.tgt, meal: state.meal, am: state.am, pm: state.pm })); } catch (e) {}
+    try { localStorage.setItem(KEY, JSON.stringify({ tgt: state.tgt, meal: state.meal, am: state.am, pm: state.pm, day: state.day })); } catch (e) {}
+  }
+
+  /* ---------- Profil, planning, suivi ---------- */
+  var PKEY = 'calculateur-repas-profile-v1', BKEY = 'calculateur-repas-body-v1';
+  var DEFPLAN = { lun: { a: ['muscu'] }, mar: { a: ['mma'] }, mer: { a: ['muscu'] }, jeu: { a: ['grappling'] }, ven: { a: ['muscu'] }, sam: { a: [], w: true }, dim: { a: [], w: true } };
+  var PROF = lsGet(PKEY, null);
+  if (!PROF || typeof PROF !== 'object') PROF = { sex: '', age: '', height: '', weight: '', goalW: '', steps: '', dur: 75, job: 'physique', goal: 'recompo', plan: DEFPLAN, mode: 'auto', adj: 0, lastAct: '' };
+  if (!PROF.plan) PROF.plan = DEFPLAN;
+  var BODY = lsGet(BKEY, []); if (!Array.isArray(BODY)) BODY = [];
+  function saveProf() { lsSet(PKEY, PROF); }
+  function bodyWeight() {
+    var r = Nutri.rolling(BODY, 'w'); if (!r.length) return 0;
+    var last = r[r.length - 1];
+    return Nutri.dayNum(state.saveDate) - last.n <= 10 ? Math.round(last.avg * 10) / 10 : 0;
+  }
+  function currentRes() { return Nutri.compute(PROF, { weight: bodyWeight() }); }
+  function todayActs() { return state.day.acts || ((PROF.plan[state.todayKey] || {}).a || []).slice(); }
+  function todayWork() { return state.day.work != null ? state.day.work : !!(PROF.plan[state.todayKey] || {}).w; }
+  function actsLabel(a, w) { var t = a.map(function (x) { return Nutri.ACT[x].label; }); if (!t.length) t.push('Repos'); if (w) t.push('Travail'); return t.join(' + '); }
+  /* Met à jour les objectifs du jour : calcul auto si le profil est complet et que l'utilisateur n'a pas personnalisé. */
+  function syncTargets() {
+    var res = currentRes(), m = res ? Nutri.forActs(PROF, res, todayActs(), todayWork()) : null;
+    state.auto = !!(m && PROF.mode !== 'manual');
+    if (state.auto) state.tgt = { p: m.p, c: m.c, f: m.f };
+    state.fibGoal = state.auto ? m.fib : Nutri.fiberFor(kcalOf(state.tgt));
   }
 
   /* ---------- Utilitaires ---------- */
@@ -620,11 +812,11 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
         });
       });
     }
-    var T = { p: 0, c: 0, f: 0 };
+    var T = { p: 0, c: 0, f: 0, fib: 0 };
     var rows = items.map(function (it) {
-      var g = q[it.id], r = { it: it, g: g, p: it.p * g / 100, c: it.c * g / 100, f: it.f * g / 100, auto: isAuto(m, it), pinned: s.pins[it.id] != null };
+      var g = q[it.id], r = { it: it, g: g, p: it.p * g / 100, c: it.c * g / 100, f: it.f * g / 100, fib: (it.fib || 0) * g / 100, auto: isAuto(m, it), pinned: s.pins[it.id] != null };
       r.kcal = kcalOf(r);
-      T.p += r.p; T.c += r.c; T.f += r.f;
+      T.p += r.p; T.c += r.c; T.f += r.f; T.fib += r.fib;
       return r;
     });
     T.kcal = kcalOf(T);
@@ -651,9 +843,8 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
       var it = row.it, d = qtyDisplay(row), sub = [];
       if (it.u) sub.push(nf(row.g) + ' g');
       if (it.b) sub.push(it.b);
-      if (it.cook) sub.push('≈ ' + nf(Math.round(row.g * it.cook / 10) * 10) + ' g cuit');
       sub.push(nf(row.kcal) + ' kcal');
-      sub.push('P ' + nf(row.p) + ' · G ' + nf(row.c) + ' · L ' + nf(row.f));
+      sub.push('P ' + nf(row.p) + ' · G ' + nf(row.c) + ' · L ' + nf(row.f) + (row.fib >= 0.5 ? ' · Fib ' + nf(row.fib) : ''));
       var line = esc(sub.join(' · '));
       if (it.note && !it.edited) line += ' · ' + esc(it.note);
       if (it.edited) line += ' · valeurs modifiées';
@@ -666,7 +857,7 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
       else if (it.sec === 'e' && row.pinned) btn += '<button class="mini" data-act="std" type="button">Quantité standard</button>';
       h += '<li class="row r' + it.sec + '" data-id="' + it.id + '"><div class="rname"><strong>' + esc(it.name) + '</strong><span class="sublin">' + line + '</span></div>' +
         '<div class="rqty"><input class="qin" type="number" inputmode="decimal" min="0" step="' + d.step + '" value="' + d.v + '" aria-label="Quantité : ' + esc(it.name) + '"><span class="qu">' + d.unit + '</span></div>' +
-        '<div class="rmeta">' + tags + btn + '<button class="mini" data-act="edit" type="button">Modifier</button><button class="mini" data-act="remove" type="button">Retirer</button></div></li>';
+        '<div class="rmeta">' + (it.cook && !it.u ? '<label class="ck">soit <input class="qck" type="number" inputmode="decimal" min="0" step="5" value="' + Math.round(row.g * it.cook) + '" aria-label="Poids cuit : ' + esc(it.name) + '"> g cuit</label>' : '') + tags + btn + '<button class="mini" data-act="edit" type="button">Modifier</button><button class="mini" data-act="remove" type="button">Retirer</button></div></li>';
     });
     return h + '</ul>';
   }
@@ -676,7 +867,7 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
       '<div class="mc"><b>' + nf(T.c) + '</b><span>Gluc.</span></div>' +
       '<div class="ml"><b>' + nf(T.f) + '</b><span>Lip.</span></div></div></div>';
   }
-  var COL = { p: 'var(--cp)', c: 'var(--cc)', f: 'var(--cl)' };
+  var COL = { p: 'var(--cp)', c: 'var(--cc)', f: 'var(--cl)', fib: 'var(--ok)' };
   function dayGauge(k, a, e, t) {
     var tot = a + e, max = Math.max(t, tot, 1), over = tot > t + TOL[k];
     var rest = t - tot;
@@ -714,10 +905,14 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
     var el = $('#result'), g = state.tgt, h = '';
     // Carte « journée »
     var tk = kcalOf({ p: g.p, c: g.c, f: g.f }), dt = { p: A.T.p + P.T.p, c: A.T.c + P.T.c, f: A.T.f + P.T.f };
+    var eaten = kcalOf(dt), left = tk - eaten;
     h += '<div class="card"><h2>Ma journée</h2>' +
-      '<div class="readout"><div class="kcal">' + nf(kcalOf(dt)) + '<small>/ ' + nf(tk) + ' kcal</small></div></div>' +
-      dayGauge('p', A.T.p, P.T.p, g.p) + dayGauge('c', A.T.c, P.T.c, g.c) + dayGauge('f', A.T.f, P.T.f, g.f) +
-      '<p class="foot">Trait noir = objectif. Barre claire = matin, barre pleine = soir.</p></div>';
+      '<div class="readout"><div class="kcal">' + nf(eaten) + '<small>/ ' + nf(tk) + ' kcal</small></div>' +
+      '<p class="need">' + (left >= 0 ? 'Reste <b>' + nf(left) + ' kcal</b>' : 'Dépasse de <b>' + nf(-left) + ' kcal</b>') + '</p></div>' +
+      dayGauge('p', A.T.p, P.T.p, g.p) + dayGauge('c', A.T.c, P.T.c, g.c) + dayGauge('f', A.T.f, P.T.f, g.f) + dayGauge('fib', A.T.fib, P.T.fib, state.fibGoal) +
+      '<p class="foot">Trait noir = objectif. Barre claire = matin, barre pleine = soir. Les fibres ne sont pas calculées : elles dépendent des aliments choisis.</p>' +
+      '<div class="actions"><button class="' + (state.ndArm ? 'cta' : 'mini') + '" type="button" data-act="newday">' + (state.ndArm ? 'Confirmer : vider les 2 repas' : 'Nouvelle journée') + '</button>' + (state.ndArm ? '<button class="mini" type="button" data-act="newdayno">Annuler</button>' : '') + '</div></div>';
+    h += qualityCard(A, P);
 
     // Carte « repas courant »
     var m = state.meal, S = m === 'am' ? A : P, RT = m === 'am' ? H : R;
@@ -730,7 +925,7 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
     } else {
       h += readout(S.T) + mealGauge('p', S.T.p, RT.p) + mealGauge('c', S.T.c, RT.c) + mealGauge('f', S.T.f, RT.f) + rowsHtml(S, m);
       h += '<div class="status">' + pmStatus(S, RT).map(function (x) { return '<p class="' + x[0] + '">' + x[1] + '</p>'; }).join('') + '</div>';
-      h += '<p class="foot">Poids crus sauf mention contraire. Moyennes : l\'étiquette prévaut (viande hachée, pains burger, sauces, produits laitiers). Modifie une quantité pour la fixer, les autres se recalculent.</p>';
+      h += '<p class="foot">Poids crus sauf mention contraire : tu peux aussi taper le poids cuit, il est converti en cru. Moyennes : l\'étiquette prévaut (viande hachée, pains burger, sauces, produits laitiers). Modifie une quantité pour la fixer, les autres se recalculent.</p>';
       if (state.saveOpen) {
         h += '<div class="savemeal"><input id="mname" type="text" maxlength="40" placeholder="Nom du repas" value="' + esc(state.mealName) + '" aria-label="Nom du repas">' +
           '<button class="cta" type="button" data-act="mealok">Enregistrer</button><button class="mini" type="button" data-act="mealno">Annuler</button></div>';
@@ -865,9 +1060,204 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
     $('#kc').textContent = nf(g.c * 4) + ' kcal';
     $('#kf').textContent = nf(g.f * 9) + ' kcal';
     $('#kt').textContent = nf(kcalOf(g));
+    $('#kfb').textContent = nf(state.fibGoal);
+    var res = currentRes();
+    $('#tbadge').textContent = state.auto ? 'Auto' : 'Personnalisé'; $('#tbadge').className = 'badge' + (state.auto ? ' auto' : '');
+    $('#reset').textContent = res ? (state.auto ? 'Recalculer' : 'Revenir au calcul auto') : 'Valeurs de départ';
+    var th = $('#thint');
+    th.hidden = !!state.auto;
+    th.innerHTML = !res ? 'Remplis ton <b>profil</b> pour que l\'appli calcule tes besoins selon ton entraînement du jour.' : 'Objectifs modifiés à la main : ils restent les mêmes tous les jours.';
+    renderDay();
+  }
+  function renderDay() {
+    var acts = todayActs(), work = todayWork(), changed = state.day.acts != null || state.day.work != null;
+    var plan = PROF.plan[state.todayKey] || {};
+    var h = '<div class="lab"><span>Aujourd\'hui (' + Nutri.DAY_LABEL[state.todayKey].toLowerCase() + ') : <b>' + esc(actsLabel(acts, work)) + '</b></span>' +
+      (changed ? '<button type="button" class="mini" data-dt="plan">Revenir au planning (' + esc(actsLabel(plan.a || [], !!plan.w)) + ')</button>' : '<span>selon ton planning</span>') + '</div><div class="tchips">';
+    Nutri.ACT_ORDER.forEach(function (k) { h += '<button type="button" class="tchip" data-dt="' + k + '" aria-pressed="' + (acts.indexOf(k) > -1) + '">' + Nutri.ACT[k].label + '</button>'; });
+    h += '<button type="button" class="tchip" data-dt="repos" aria-pressed="' + (!acts.length) + '">Repos</button>';
+    h += '<button type="button" class="tchip work" data-dt="travail" aria-pressed="' + work + '">Travail</button></div>';
+    $('#dayline').innerHTML = h;
+  }
+
+  /* ---------- Qualité nutritionnelle ---------- */
+  function qualityCard(A, P) {
+    var by = {};
+    A.rows.concat(P.rows).forEach(function (r) {
+      var t = by[r.it.id] || (by[r.it.id] = { g: 0, fib: r.it.fib || 0, p: r.it.p, f: r.it.f });
+      t.g += r.g; var tg = tagsOf(r.it); t.kind = tg.kind; t.pgroup = tg.pgroup; t.fat = tg.fat;
+    });
+    var items = Object.keys(by).map(function (k) { return by[k]; });
+    var res = currentRes(), w = res ? res.weight : (parseFloat(PROF.weight) || 0);
+    var q = Nutri.quality(items, state.fibGoal, state.day.water || 0, w);
+    var h = '<details class="card qual"' + (state.qOpen ? ' open' : '') + '><summary><h2>Qualité de la journée</h2><b>' + (items.length ? q.score : '–') + '<small> / 100</small></b></summary>';
+    if (!items.length) h += '<p class="tip" style="margin-top:10px">Coche des aliments pour voir l\'équilibre de ta journée.</p>';
+    else {
+      h += '<ul class="qlist">' + q.parts.map(function (x) {
+        return '<li>' + x.label + '<span>' + esc(x.info) + ' · ' + x.pts + '/' + x.max + '</span><div class="track"><i class="sg" style="width:' + (x.pts / x.max * 100) + '%;background:' + (x.pts >= x.max * 0.7 ? 'var(--ok)' : 'var(--cc)') + '"></i></div></li>';
+      }).join('') + '</ul>';
+      if (q.tips.length) h += '<div class="status" style="margin-top:12px">' + q.tips.map(function (t) { return '<p class="warn">' + esc(t) + '</p>'; }).join('') + '</div>';
+    }
+    h += '<div class="water" style="margin-top:12px"><label for="water">Eau bue aujourd\'hui</label><input id="water" type="number" inputmode="decimal" min="0" max="10" step="0.25" value="' + (state.day.water || '') + '" placeholder="0"> L <span>(objectif ≈ ' + nf(q.waterGoal, 1) + ' L, facultatif)</span></div>';
+    h += '<p class="foot" style="margin-top:10px">Évalue l\'équilibre de la journée, pas chaque aliment : un dessert ou un aliment transformé n\'est pas pénalisé.</p></details>';
+    return h;
+  }
+
+  /* ---------- Vue Profil ---------- */
+  var GOALTXT = {
+    recompo: 'Construire du muscle en réduisant peu à peu le gras. Calories proches du maintien.',
+    masse: 'Léger surplus pour construire du muscle en limitant la prise de gras.',
+    perte: 'Déficit raisonnable pour perdre du gras en gardant le muscle.'
+  };
+  function fillProfile() {
+    $('#pjob').innerHTML = Object.keys(Nutri.JOB).map(function (k) { return '<option value="' + k + '">' + Nutri.JOB[k].label + '</option>'; }).join('');
+    $('#page').value = PROF.age; $('#pheight').value = PROF.height; $('#pweight').value = PROF.weight; $('#pgoalw').value = PROF.goalW;
+    $('#psteps').value = PROF.steps; $('#pdur').value = PROF.dur; $('#pjob').value = PROF.job in Nutri.JOB ? PROF.job : 'sedentaire';
+    renderProfileControls();
+  }
+  function renderProfileControls() {
+    document.querySelectorAll('#psex button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-v') === PROF.sex)); });
+    $('#pgoal').innerHTML = Object.keys(Nutri.GOALS).map(function (k) {
+      return '<button type="button" data-g="' + k + '" aria-pressed="' + (PROF.goal === k) + '"><b>' + Nutri.GOALS[k].label + '</b><span>' + GOALTXT[k] + '</span></button>';
+    }).join('');
+    $('#plan').innerHTML = Nutri.DAYS.map(function (d) {
+      var x = PROF.plan[d] || { a: [] }, a = x.a || [];
+      return '<div class="pd"><h4>' + Nutri.DAY_LABEL[d] + '<span>' + esc(actsLabel(a, !!x.w)) + '</span></h4><div class="tchips">' +
+        Nutri.ACT_ORDER.map(function (k) { return '<button type="button" class="tchip" data-pd="' + d + '" data-pa="' + k + '" aria-pressed="' + (a.indexOf(k) > -1) + '">' + Nutri.ACT[k].label + '</button>'; }).join('') +
+        '<button type="button" class="tchip work" data-pd="' + d + '" data-pa="travail" aria-pressed="' + !!x.w + '">Travail</button></div></div>';
+    }).join('');
+  }
+  function renderProfileResults() {
+    var el = $('#pres'), errs = Nutri.checkProfile(PROF);
+    $('#perr').textContent = errs.length && (PROF.age || PROF.height || PROF.weight) ? errs.join(' ') : '';
+    if (errs.length) { el.innerHTML = '<h2>Mes besoins</h2><p class="tip" style="margin-top:10px">Remplis ton sexe, ton âge, ta taille et ton poids : les besoins s\'affichent ici.</p>'; return; }
+    var r = currentRes(), bw = bodyWeight(), a = r.avg, goalAdj = r.adj - (parseFloat(PROF.adj) || 0);
+    var h = '<div class="sect-title"><h2>Mes besoins</h2><span class="badge' + (PROF.mode !== 'manual' ? ' auto' : '') + '">' + (PROF.mode !== 'manual' ? 'Utilisés dans Repas' : 'Non utilisés : objectifs personnalisés') + '</span></div>';
+    h += '<div class="kv">' +
+      '<div><span>Métabolisme de base</span><b>' + nf(r.bmr) + '</b><small>kcal, au repos complet</small></div>' +
+      '<div><span>Maintien (TDEE)</span><b>' + nf(r.maint) + '</b><small>kcal / jour en moyenne</small></div>' +
+      '<div><span>Objectif</span><b>' + nf(a.kcal) + '</b><small>kcal / jour en moyenne (' + (r.adj >= 0 ? '+' : '') + nf(r.adj) + ')</small></div>' +
+      '<div><span>Niveau d\'activité</span><b style="font-size:20px">' + r.level + '</b><small>' + r.sessions + ' séance' + (r.sessions > 1 ? 's' : '') + ' / semaine</small></div></div>';
+    h += '<p class="tip" style="margin-top:12px">Poids utilisé : <b>' + nf(r.weight, 1) + ' kg</b>' + (bw ? ' (moyenne 7 jours du suivi)' : ' (profil)') + '. Ajustement de l\'objectif : ' + (goalAdj >= 0 ? '+' : '') + nf(goalAdj) + ' kcal' +
+      ((parseFloat(PROF.adj) || 0) ? ', ajustement du suivi : ' + (PROF.adj > 0 ? '+' : '') + nf(PROF.adj) + ' kcal <button type="button" class="mini" id="adj0">Remettre à 0</button>' : '') + '.</p>';
+    h += '<h4 class="subh">Macros moyennes par jour</h4><div class="kv">' +
+      '<div><span>Protéines</span><b style="color:var(--cp)">' + a.p + ' g</b><small>' + nf(a.p * 4) + ' kcal · ' + nf(a.p / r.weight, 1) + ' g/kg</small></div>' +
+      '<div><span>Glucides</span><b style="color:var(--cc)">' + a.c + ' g</b><small>' + nf(a.c * 4) + ' kcal</small></div>' +
+      '<div><span>Lipides</span><b style="color:var(--cl)">' + a.f + ' g</b><small>' + nf(a.f * 9) + ' kcal</small></div>' +
+      '<div><span>Fibres</span><b style="color:var(--ok)">' + a.fib + ' g</b><small>14 g / 1 000 kcal</small></div></div>';
+    h += '<p class="check" style="margin-top:8px">Vérification : ' + a.p + ' × 4 + ' + a.c + ' × 4 + ' + a.f + ' × 9 = ' + nf(a.p * 4 + a.c * 4 + a.f * 9) + ' kcal ✓</p>';
+    h += '<h4 class="subh">Selon le jour</h4><table class="dtable"><tr><th>Jour</th><th>Activité</th><th>kcal</th><th>Gluc.</th></tr>' + Nutri.DAYS.map(function (d) {
+      var x = r.days[d]; return '<tr' + (d === state.todayKey ? ' class="today"' : '') + '><td>' + Nutri.DAY_LABEL[d].slice(0, 3) + '</td><td>' + esc(actsLabel(x.acts, x.work)) + '</td><td>' + nf(x.macros.kcal) + '</td><td>' + x.macros.c + ' g</td></tr>';
+    }).join('') + '</table>';
+    h += '<p class="foot" style="margin-top:10px">Protéines et lipides restent les mêmes chaque jour : seuls les glucides suivent l\'entraînement. Un jour de repos ne descend jamais sous 90 % de la moyenne, pour bien récupérer.</p>';
+    h += '<p class="foot" style="margin-top:6px">Estimations : métabolisme de base selon Mifflin-St Jeor, plus ton activité, tes pas et tes séances. Tes vrais besoins peuvent varier d\'environ 10 % : c\'est l\'évolution de ton poids (onglet Suivi) qui permet d\'ajuster.</p>';
+    if (PROF.mode === 'manual') h += '<div class="actions" style="margin-top:12px"><button type="button" class="cta" id="goauto">Utiliser ces besoins dans Repas</button></div>';
+    el.innerHTML = h;
+  }
+  function profChanged() { saveProf(); syncTargets(); save(); renderTargets(false); render(); renderProfileResults(); renderSuivi(); }
+
+  /* ---------- Vue Suivi ---------- */
+  function fmtD(d) { var x = new Date(d + 'T12:00:00'); return isNaN(x) ? d : x.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }); }
+  function chartSvg(pts, color, unit) {
+    if (pts.length < 2) return '<p class="tip">Au moins 2 mesures pour afficher la courbe.</p>';
+    var W = 340, H = 170, L = 38, R = 8, T = 10, B = 26;
+    var n0 = pts[0].n, n1 = pts[pts.length - 1].n, span = Math.max(n1 - n0, 1);
+    var vals = []; pts.forEach(function (p) { vals.push(p.v, p.avg); });
+    var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals), pad = Math.max((hi - lo) * 0.15, 0.3); lo -= pad; hi += pad;
+    function X(n) { return L + (n - n0) / span * (W - L - R); }
+    function Y(v) { return T + (hi - v) / (hi - lo) * (H - T - B); }
+    var g = '';
+    [lo + pad, (lo + hi) / 2, hi - pad].forEach(function (v) { g += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(v).toFixed(1) + '" y2="' + Y(v).toFixed(1) + '" stroke="var(--line)" stroke-width="1"/><text x="' + (L - 6) + '" y="' + (Y(v) + 4).toFixed(1) + '" text-anchor="end" font-size="11" fill="var(--muted)">' + nf(v, 1) + '</text>'; });
+    var line = pts.map(function (p, i) { return (i ? 'L' : 'M') + X(p.n).toFixed(1) + ' ' + Y(p.avg).toFixed(1); }).join(' ');
+    var dots = pts.map(function (p) { return '<circle cx="' + X(p.n).toFixed(1) + '" cy="' + Y(p.v).toFixed(1) + '" r="3" fill="' + color + '" opacity=".45"/>'; }).join('');
+    var lab = '<text x="' + L + '" y="' + (H - 6) + '" font-size="11" fill="var(--muted)">' + esc(fmtD(pts[0].d)) + '</text><text x="' + (W - R) + '" y="' + (H - 6) + '" font-size="11" text-anchor="end" fill="var(--muted)">' + esc(fmtD(pts[pts.length - 1].d)) + '</text>';
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Courbe en ' + unit + '">' + g + dots + '<path d="' + line + '" fill="none" stroke="' + color + '" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>' + lab + '</svg>';
+  }
+  function renderSuivi() {
+    var an = Nutri.analyze(BODY, PROF.goal, state.saveDate), el = $('#sadj'), daysSince = PROF.lastAct ? Nutri.dayNum(state.saveDate) - Nutri.dayNum(PROF.lastAct) : 99;
+    var h = '<div class="sect-title"><h2>Analyse</h2><small>' + Nutri.GOALS[PROF.goal in Nutri.GOALS ? PROF.goal : 'recompo'].label + '</small></div>';
+    if (an.status === 'wait') h += '<div class="adj"><p>' + esc(an.msg) + '</p><p class="tip">Mesures : ' + an.n1 + ' ces 7 derniers jours, ' + an.n0 + ' les 7 jours d\'avant.</p></div>';
+    else {
+      h += '<div class="kv" style="margin-bottom:14px"><div><span>Moyenne 7 j</span><b>' + nf(an.a1, 1) + ' kg</b><small>avant : ' + nf(an.a0, 1) + ' kg</small></div><div><span>Variation</span><b>' + (an.rate > 0 ? '+' : '') + nf(an.rate, 2) + ' %</b><small>par semaine</small></div>' +
+        (an.dt != null ? '<div><span>Tour de taille</span><b>' + (an.dt > 0 ? '+' : '') + nf(an.dt, 1) + ' cm</b><small>sur une semaine</small></div>' : '') + '</div>';
+      h += '<div class="adj ' + an.status + '"><p>' + esc(an.msg) + '</p>';
+      if (an.delta) {
+        if (daysSince < 7) h += '<p class="tip">Dernier ajustement ' + (daysSince ? 'il y a ' + daysSince + ' jour' + (daysSince > 1 ? 's' : '') : 'aujourd\'hui') + ' : attends encore ' + (7 - daysSince) + ' jour' + (7 - daysSince > 1 ? 's' : '') + ' pour voir son effet.</p>';
+        else h += '<div class="actions"><button type="button" class="cta" data-adj="' + an.delta + '">Appliquer (' + (an.delta > 0 ? '+' : '') + an.delta + ' kcal / jour)</button><button type="button" class="mini" data-adj="0">Ignorer</button></div><p class="tip">Rien n\'est changé sans ton accord. L\'ajustement passe par les glucides.</p>';
+      }
+      h += '</div>';
+    }
+    el.innerHTML = h;
+    var rw = Nutri.rolling(BODY, 'w'), rt = Nutri.rolling(BODY, 't'), c = '<div class="sect-title"><h2>Évolution</h2></div>';
+    if (!rw.length && !rt.length) c += '<p class="tip">Enregistre ton poids (et si possible ton tour de taille) quelques matins par semaine.</p>';
+    else {
+      c += '<h4 class="subh">Poids (kg)</h4><div class="leg"><span><i style="background:var(--cp);opacity:.45"></i>mesure</span><span><i style="background:var(--cp)"></i>moyenne 7 jours</span></div>' + chartSvg(rw, 'var(--cp)', 'kg');
+      if (rt.length) c += '<h4 class="subh">Tour de taille (cm)</h4>' + chartSvg(rt, 'var(--cl)', 'cm');
+    }
+    $('#schart').innerHTML = c;
+    var L = BODY.slice().sort(function (a, b) { return a.d < b.d ? 1 : -1; });
+    var PERF = { up: 'perfs en progrès', flat: 'perfs stables', down: 'perfs en baisse' };
+    $('#slist').innerHTML = '<div class="sect-title"><h2>Mesures</h2><small>' + L.length + '</small></div>' + (L.length ? '<ul class="mlist">' + L.map(function (m) {
+      return '<li><div>' + esc(fmtD(m.d)) + '<br><span>' + [m.w ? nf(m.w, 1) + ' kg' : '', m.t ? nf(m.t, 1) + ' cm' : '', PERF[m.perf] || ''].filter(Boolean).join(' · ') + '</span></div><button type="button" class="mini" data-bdel="' + esc(m.d) + '">' + (state.bArm === m.d ? 'Confirmer' : 'Supprimer') + '</button></li>';
+    }).join('') + '</ul>' : '<p class="tip">Aucune mesure.</p>');
+  }
+  function setView(v) {
+    state.view = v; document.body.setAttribute('data-view', v);
+    ['repas', 'profil', 'suivi'].forEach(function (k) { $('#v-' + k).hidden = k !== v; });
+    document.querySelectorAll('#nav button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-v') === v)); });
+    if (v === 'profil') renderProfileResults(); if (v === 'suivi') renderSuivi();
+    window.scrollTo(0, 0);
   }
 
   /* ---------- Événements ---------- */
+  $('#nav').addEventListener('click', function (e) { var b = e.target.closest('button[data-v]'); if (b) setView(b.getAttribute('data-v')); });
+  document.querySelector('#v-profil').addEventListener('input', function (e) {
+    var map = { page: 'age', pheight: 'height', pweight: 'weight', pgoalw: 'goalW', psteps: 'steps', pdur: 'dur', pjob: 'job' }, k = map[e.target.id];
+    if (!k) return; PROF[k] = e.target.value; profChanged();
+  });
+  $('#pjob').addEventListener('change', function (e) { PROF.job = e.target.value; profChanged(); });
+  $('#psex').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; PROF.sex = b.getAttribute('data-v'); renderProfileControls(); profChanged(); });
+  $('#pgoal').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; PROF.goal = b.getAttribute('data-g'); renderProfileControls(); profChanged(); });
+  $('#plan').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-pd]'); if (!b) return;
+    var d = b.getAttribute('data-pd'), k = b.getAttribute('data-pa'), x = PROF.plan[d] || (PROF.plan[d] = { a: [] });
+    x.a = x.a || [];
+    if (k === 'travail') x.w = !x.w; else { var i = x.a.indexOf(k); if (i > -1) x.a.splice(i, 1); else x.a.push(k); }
+    renderProfileControls(); profChanged();
+  });
+  $('#pres').addEventListener('click', function (e) {
+    if (e.target.id === 'goauto') { PROF.mode = 'auto'; profChanged(); }
+    if (e.target.id === 'adj0') { PROF.adj = 0; profChanged(); }
+  });
+  $('#fbody').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var d = $('#bd').value, w = parseFloat($('#bw').value), t = parseFloat($('#bt').value), pf = $('#bp').value, fl = $('#bflash2');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) { fl.className = 'flash err'; fl.textContent = 'Choisis une date.'; return; }
+    if (d > state.saveDate) { fl.className = 'flash err'; fl.textContent = 'La date ne peut pas être dans le futur.'; return; }
+    if (isNaN(w) && isNaN(t) && !pf) { fl.className = 'flash err'; fl.textContent = 'Indique au moins ton poids, ton tour de taille ou tes performances.'; return; }
+    if (!isNaN(w) && (w < 35 || w > 250)) { fl.className = 'flash err'; fl.textContent = 'Poids accepté : de 35 à 250 kg.'; return; }
+    if (!isNaN(t) && (t < 40 || t > 200)) { fl.className = 'flash err'; fl.textContent = 'Tour de taille accepté : de 40 à 200 cm.'; return; }
+    var old = BODY.filter(function (m) { return m.d === d; })[0] || { d: d };
+    if (!isNaN(w)) old.w = Math.round(w * 10) / 10; if (!isNaN(t)) old.t = Math.round(t * 10) / 10; if (pf) old.perf = pf;
+    BODY = BODY.filter(function (m) { return m.d !== d; }); BODY.push(old);
+    if (!lsSet(BKEY, BODY)) { fl.className = 'flash err'; fl.textContent = 'Enregistrement impossible.'; return; }
+    fl.className = 'flash'; fl.textContent = 'Mesure du ' + fmtD(d) + ' enregistrée.';
+    $('#bw').value = ''; $('#bt').value = ''; $('#bp').value = '';
+    profChanged();
+  });
+  $('#slist').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-bdel]'); if (!b) return; var d = b.getAttribute('data-bdel');
+    if (state.bArm !== d) { state.bArm = d; renderSuivi(); return; }
+    state.bArm = ''; BODY = BODY.filter(function (m) { return m.d !== d; }); lsSet(BKEY, BODY); profChanged();
+  });
+  $('#sadj').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-adj]'); if (!b) return; var dl = +b.getAttribute('data-adj');
+    if (dl) {
+      if (PROF.mode === 'manual') { state.tgt.c = Math.max(0, Math.round(state.tgt.c + dl / 4)); save(); }
+      else PROF.adj = (parseFloat(PROF.adj) || 0) + dl;
+    }
+    PROF.lastAct = state.saveDate; profChanged();
+  });
   function setMode(it) {
     state.editId = it ? it.id : '';
     $('#fmode').hidden = !it; $('#fmode').innerHTML = it ? 'Modification de <b>' + esc(it.name) + '</b>' + (it.mine ? '' : ' (aliment de base)') : '';
@@ -879,7 +1269,7 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
   function openEdit(id) {
     var it = BY[id]; if (!it) return;
     $('#ffood').reset(); $('#fflash').textContent = ''; setMode(it);
-    $('#fn').value = it.name; $('#fs').value = it.sec; $('#fp').value = it.p; $('#fc').value = it.c; $('#fl').value = it.f; $('#fu').value = it.u ? it.u[2] : ''; $('#fm').value = maxShown(it);
+    $('#fn').value = it.name; $('#fs').value = it.sec; $('#fp').value = it.p; $('#fc').value = it.c; $('#fl').value = it.f; $('#fu').value = it.u ? it.u[2] : ''; $('#fm').value = maxShown(it); $('#ffb').value = it.fib || '';
     var d = $('#addfood'); d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   function closeEdit() { $('#ffood').reset(); setMode(null); }
@@ -919,8 +1309,8 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
   $('#ffood').addEventListener('submit', function (e) {
     e.preventDefault();
     var name = $('#fn').value.trim(), fl = $('#fflash');
-    var c = { id: 'u' + Date.now(), name: name, sec: $('#fs').value, p: parseFloat($('#fp').value), c: parseFloat($('#fc').value), f: parseFloat($('#fl').value), u: parseFloat($('#fu').value) || 0, max: parseFloat($('#fm').value) || 0 };
-    if (!name || [c.p, c.c, c.f].some(function (v) { return isNaN(v) || v < 0 || v > 100; }) || c.p + c.c + c.f > 100) {
+    var c = { id: 'u' + Date.now(), name: name, sec: $('#fs').value, p: parseFloat($('#fp').value), c: parseFloat($('#fc').value), f: parseFloat($('#fl').value), u: parseFloat($('#fu').value) || 0, max: parseFloat($('#fm').value) || 0, fb: parseFloat($('#ffb').value) || 0 };
+    if (!name || [c.p, c.c, c.f].some(function (v) { return isNaN(v) || v < 0 || v > 100; }) || c.p + c.c + c.f + c.fb > 100) {
       fl.className = 'flash err'; fl.textContent = 'Vérifie les valeurs : elles sont pour 100 g, et leur total ne peut pas dépasser 100.'; return;
     }
     if (D.some(function (it) { return it.id !== state.editId && norm(it.name) === norm(name); })) { fl.className = 'flash err'; fl.textContent = 'Un aliment porte déjà ce nom.'; return; }
@@ -929,11 +1319,11 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
       var it = BY[state.editId];
       if (it.mine) {
         var cc = CUSTOM.filter(function (x) { return x.id === it.id; })[0];
-        cc.name = c.name; cc.sec = c.sec; cc.p = c.p; cc.c = c.c; cc.f = c.f; cc.u = c.u; cc.max = c.max; lsSet(FKEY, CUSTOM);
-        it.name = c.name; it.sec = c.sec; it.fix = c.sec === 'e'; it.p = c.p; it.c = c.c; it.f = c.f; setUnit(it, c.u); setMax(it, c.max);
+        cc.name = c.name; cc.sec = c.sec; cc.p = c.p; cc.c = c.c; cc.f = c.f; cc.u = c.u; cc.max = c.max; cc.fb = c.fb; lsSet(FKEY, CUSTOM);
+        it.name = c.name; it.sec = c.sec; it.fix = c.sec === 'e'; it.p = c.p; it.c = c.c; it.f = c.f; setUnit(it, c.u); setMax(it, c.max); it.fib = c.fb;
         it.kcal = it.p * 4 + it.c * 4 + it.f * 9;
       } else {
-        restoreOrig(it); EDITS[it.id] = { name: c.name, p: c.p, c: c.c, f: c.f, u: c.u, max: c.max }; lsSet(OKEY, EDITS); applyEdit(it, EDITS[it.id]);
+        restoreOrig(it); EDITS[it.id] = { name: c.name, p: c.p, c: c.c, f: c.f, u: c.u, max: c.max, fb: c.fb }; lsSet(OKEY, EDITS); applyEdit(it, EDITS[it.id]);
       }
       fl.className = 'flash'; fl.textContent = '« ' + it.name + ' » modifié. Les quantités sont recalculées.';
       closeEdit(); save(); renderFoods(); renderMyList(); renderSaved(); render(); return;
@@ -961,7 +1351,7 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
   function bmsg(t, err) { var el = $('#bflash'); el.className = 'flash' + (err ? ' err' : ''); el.textContent = t; }
   $('#bexp').addEventListener('click', async function () {
     var data = { app: 'calculateur-repas', v: 1, exportedAt: new Date().toISOString(),
-      state: { tgt: state.tgt, am: state.am, pm: state.pm }, meals: MEALS, foods: CUSTOM, edits: EDITS, recent: RECENT };
+      state: { tgt: state.tgt, am: state.am, pm: state.pm }, meals: MEALS, foods: CUSTOM, edits: EDITS, recent: RECENT, profile: PROF, body: BODY };
     var name = 'repas-sauvegarde-' + state.saveDate + '.json', txt = JSON.stringify(data);
     try {
       var file = new File([txt], name, { type: 'application/json' });
@@ -988,8 +1378,10 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
       MEALS.sort(function (a, b) { return (b.at || 0) - (a.at || 0); }); lsSet(MKEY, MEALS);
       if (Array.isArray(d.recent)) lsSet(RKEY, d.recent);
       if (d.edits && typeof d.edits === 'object') { for (var k in d.edits) EDITS[k] = d.edits[k]; lsSet(OKEY, EDITS); }
+      if (d.profile && typeof d.profile === 'object') lsSet(PKEY, d.profile);
+      if (Array.isArray(d.body)) { d.body.forEach(function (m) { if (m && /^\d{4}-\d{2}-\d{2}$/.test(m.d)) { BODY = BODY.filter(function (x) { return x.d !== m.d; }); BODY.push(m); } }); lsSet(BKEY, BODY); }
       if (d.state && d.state.tgt) lsSet(KEY, { tgt: d.state.tgt, meal: state.meal, am: d.state.am || state.am, pm: d.state.pm || state.pm });
-      bmsg('Importé : ' + meals.length + ' repas, ' + foods.length + ' aliment(s). Rechargement…');
+      bmsg('Importé : ' + meals.length + ' repas, ' + foods.length + ' aliment(s)' + (Array.isArray(d.body) ? ', ' + d.body.length + ' mesure(s)' : '') + '. Rechargement…');
       setTimeout(function () { location.reload(); }, 900);
     };
     rd.readAsText(f); e.target.value = '';
@@ -1012,14 +1404,31 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
   function setTgt(k, id) {
     $(id).addEventListener('input', function (e) {
       var v = parseFloat(e.target.value); if (isNaN(v) || v < 0) v = 0;
-      state.tgt[k] = v; save(); renderTargets(true); render();
+      state.tgt[k] = v; PROF.mode = 'manual'; saveProf(); syncTargets(); save(); renderTargets(true); render(); renderProfileResults();
     });
   }
   setTgt('p', '#tp'); setTgt('c', '#tc'); setTgt('f', '#tf');
   $('#reset').addEventListener('click', function () {
-    state.tgt = { p: DEFT.p, c: DEFT.c, f: DEFT.f }; save(); renderTargets(false); render();
+    if (currentRes()) { PROF.mode = 'auto'; saveProf(); syncTargets(); }
+    else { state.tgt = { p: DEFT.p, c: DEFT.c, f: DEFT.f }; syncTargets(); }
+    save(); renderTargets(false); render(); renderProfileResults();
+  });
+  $('#dayline').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-dt]'); if (!b) return;
+    var k = b.getAttribute('data-dt'), acts = todayActs();
+    if (k === 'plan') { state.day.acts = null; state.day.work = null; }
+    else if (k === 'repos') state.day.acts = [];
+    else if (k === 'travail') state.day.work = !todayWork();
+    else { var i = acts.indexOf(k); if (i > -1) acts.splice(i, 1); else acts.push(k); state.day.acts = acts; }
+    save(); syncTargets(); renderTargets(false); render();
   });
   $('#result').addEventListener('change', function (e) {
+    if (e.target.id === 'water') { var wv = parseFloat(String(e.target.value).replace(',', '.')); state.day.water = isNaN(wv) || wv < 0 ? 0 : Math.min(wv, 10); save(); render(); return; }
+    if (e.target.classList.contains('qck')) {
+      var rw = e.target.closest('.row'), ci = BY[rw.getAttribute('data-id')], cv = parseFloat(e.target.value);
+      if (isNaN(cv) || cv < 0 || !ci.cook) { render(); return; }
+      state[state.meal].pins[ci.id] = Math.round(cv / ci.cook); save(); render(); return;
+    }
     if (!e.target.classList.contains('qin')) return;
     var row = e.target.closest('.row'), it = BY[row.getAttribute('data-id')], v = parseFloat(e.target.value), s = state[state.meal];
     if (isNaN(v) || v < 0) { render(); return; }
@@ -1029,6 +1438,17 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
   $('#result').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return;
     var act = b.getAttribute('data-act'), s = state[state.meal];
+    if (act === 'newday') {
+      if (!state.ndArm) { state.ndArm = true; render(); return; }
+      state.ndArm = false;
+      ['am', 'pm'].forEach(function (k) { state[k] = { sel: [], pins: {}, force: {} }; });
+      state.meal = 'am'; state.saveOpen = false;
+      state.day = { date: state.saveDate, acts: null, work: null, water: 0 };
+      state.mflash = 'Nouvelle journée : les 2 repas sont remis à zéro.';
+      save(); syncTargets(); renderTargets(false); renderPresets(); renderFoods(); render();
+      window.scrollTo({ top: 0, behavior: 'smooth' }); return;
+    }
+    if (act === 'newdayno') { state.ndArm = false; render(); return; }
     if (act === 'mealsave') { state.saveOpen = true; state.mealName = defaultMealName(); render(); var mi = $('#mname'); if (mi) { mi.focus(); mi.select(); } return; }
     if (act === 'mealok') { saveMeal(); return; }
     if (act === 'mealno') { state.saveOpen = false; render(); return; }
@@ -1042,6 +1462,7 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
     if (act === 'std') { delete s.pins[id]; }
     save(); render();
   });
+  $('#result').addEventListener('toggle', function (e) { if (e.target.classList && e.target.classList.contains('qual')) state.qOpen = e.target.open; }, true);
   $('#bar').addEventListener('click', function (e) {
     if (!e.target.closest('#goto')) return;
     var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1049,7 +1470,8 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
     t.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
   });
 
-  renderTargets(false); renderTabs(); renderPresets(); renderFoods(); render(); renderMyList();
+  $('#bd').value = state.saveDate; $('#bd').max = state.saveDate;
+  fillProfile(); syncTargets(); save(); renderTargets(false); renderTabs(); renderPresets(); renderFoods(); render(); renderMyList(); setView('repas');
 })();
 </script>
 
