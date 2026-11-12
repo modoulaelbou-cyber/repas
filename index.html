@@ -307,6 +307,7 @@ body:not([data-view="repas"]) .bar { display: none; }
   <div class="layout">
     <main class="picker">
       <div class="seg" id="seg" role="group" aria-label="Choix du repas"></div>
+      <div class="actions" id="ndtop"></div>
 
       <section aria-label="Mes repas">
         <div class="sect-title"><h2>Mes repas</h2><button type="button" class="mini" id="mmanage">Gérer</button></div>
@@ -949,6 +950,8 @@ body:not([data-view="repas"]) .bar { display: none; }
       var n = state[m[0]].sel.length;
       return '<button type="button" data-m="' + m[0] + '" aria-pressed="' + (state.meal === m[0]) + '">' + m[1] + '<small>' + m[2] + ' · ' + n + ' aliment' + (n > 1 ? 's' : '') + '</small></button>';
     }).join('');
+    var nd = state.am.sel.length + state.pm.sel.length;
+    $('#ndtop').innerHTML = nd ? '<button class="' + (state.ndArm ? 'cta' : 'mini') + '" type="button" data-act="newday">' + (state.ndArm ? 'Confirmer : vider matin et soir' : 'Nouvelle journée : vider matin et soir') + '</button>' + (state.ndArm ? '<button class="mini" type="button" data-act="newdayno">Annuler</button>' : '') : '';
     $('#fhint').textContent = 'Coche tes sources : les quantités se calculent pour ce repas. Petit chiffre = g pour 100 g.';
   }
 
@@ -1461,6 +1464,11 @@ body:not([data-view="repas"]) .bar { display: none; }
     if (act === 'calc') { delete s.pins[id]; s.force[id] = true; }
     if (act === 'std') { delete s.pins[id]; }
     save(); render();
+  });
+  $('#ndtop').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-act]'); if (!b) return;
+    var rb = document.querySelector('#result [data-act="' + b.getAttribute('data-act') + '"]');
+    if (rb) rb.click();
   });
   $('#result').addEventListener('toggle', function (e) { if (e.target.classList && e.target.classList.contains('qual')) state.qOpen = e.target.open; }, true);
   $('#bar').addEventListener('click', function (e) {
