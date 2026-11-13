@@ -21,7 +21,9 @@ jobs:
             [ -z "$name" ] && continue
             url="https://commons.wikimedia.org/wiki/Special:FilePath/${file}?width=480"
             if curl -fsSL -A "$UA" "$url" -o "/tmp/$name.src"; then
-              convert "/tmp/$name.src[0]" -background white -alpha remove -resize '480x480>' -quality 80 "muscu/img/$name.jpg" && echo "OK $name $file" >> muscu/img/report.txt || echo "CONVERT-FAIL $name $file" >> muscu/img/report.txt
+              mkdir -p muscu/img/raw
+              mv "/tmp/$name.src" "muscu/img/raw/$name"
+              echo "OK $name $file $(file -b --mime-type muscu/img/raw/$name)" >> muscu/img/report.txt
             else
               echo "DOWNLOAD-FAIL $name $file" >> muscu/img/report.txt
             fi
