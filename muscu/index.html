@@ -105,7 +105,7 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
 .timer .l { font-size: 13px; opacity: .75; }
 .timer.end { background: var(--ok); color: var(--on); }
 .timer .btns { display: flex; gap: 8px; }
-.timer button { min-height: 44px; padding: 6px 14px; border: 0; border-radius: 8px; background: var(--bg); color: var(--ink); font-weight: 600; }
+.timer button { white-space: nowrap; min-height: 44px; padding: 6px 14px; border: 0; border-radius: 8px; background: var(--bg); color: var(--ink); font-weight: 600; }
 /* Voir la machine */
 .how { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px; }
 .how summary { cursor: pointer; font-size: 14px; font-weight: 600; color: var(--accent); list-style: none; }
@@ -128,6 +128,30 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
 .opt { margin-top: 8px; padding: 10px 12px; border-radius: 8px; background: var(--surface2); font-size: 14px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
 .skipped { padding: 18px 16px; text-align: center; color: var(--muted); }
 .bonus { display: inline-block; margin-top: 6px; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--warn); }
+/* Semaine dernière, note, échauffement */
+.prev { margin: 8px 0 0; font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.prev b { color: var(--ink); font-weight: 600; }
+.note { margin: 8px 0 0; font-size: 14px; padding: 6px 10px; border-radius: 6px; background: var(--surface2); }
+.warm { margin: 10px 0 0; font-size: 14px; padding-left: 10px; border-left: 3px solid var(--accent); }
+/* Modifier un exercice */
+.edit { margin-top: 12px; padding: 12px; border-radius: 8px; background: var(--surface2); display: grid; gap: 10px; }
+.edit .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.edit label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.edit input, .edit select { min-height: 42px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); width: 100%; min-width: 0; }
+.cnt { display: flex; align-items: center; gap: 6px; }
+.cnt .step { width: 40px; height: 40px; font-size: 20px; }
+.cnt b { font: 700 26px/1 var(--display); min-width: 2ch; text-align: center; }
+/* Réglages et progrès */
+.settings { display: grid; gap: 8px; }
+.toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 15px; min-height: 44px; }
+.toggle input { width: 22px; height: 22px; accent-color: var(--ok); }
+.plist { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.plist li { display: flex; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 14px; font-variant-numeric: tabular-nums; }
+.plist li span { color: var(--muted); text-align: right; }
+.plist li .up { color: var(--ok); font-weight: 600; }
+.weeks { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.weeks span { font-size: 12px; padding: 4px 8px; border-radius: 6px; background: var(--surface2); font-variant-numeric: tabular-nums; }
+.box h2 { font-size: 22px; margin-bottom: 10px; }
 @media (prefers-reduced-motion: reduce) { .track i { transition: none; } }
 </style>
 </head>
@@ -141,8 +165,15 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
   <nav class="days" id="days" aria-label="Jours"></nav>
   <div class="dayhead" id="dayhead"></div>
   <main class="list" id="list" aria-live="polite"></main>
+  <section class="card box" id="progress" aria-label="Progrès" style="margin-top:26px"></section>
+  <section class="card box settings" aria-label="Réglages" style="margin-top:12px">
+    <h2>Réglages</h2>
+    <label class="toggle">Son à la fin du repos<input type="checkbox" id="optsound"></label>
+    <label class="toggle">Garder l'écran allumé pendant la séance<input type="checkbox" id="optwake"></label>
+    <p class="tip">Sur iPhone, le son ne joue que si l'appli est ouverte (écran allumé) et que le mode silencieux est coupé.</p>
+  </section>
   <section class="foot" aria-label="Semaine et sauvegarde">
-    <div class="actions"><button class="mini" type="button" id="newweek">Nouvelle semaine</button><span class="tip" id="nwtip">Décoche toutes les séries, garde les charges.</span></div>
+    <div class="actions"><button class="mini" type="button" id="newweek">Nouvelle semaine</button><span class="tip" id="nwtip">Décoche toutes les séries, garde les charges et retient ce que tu as fait pour « Semaine dernière ».</span></div>
     <p class="tip">Images : Wikimedia Commons, licences libres (détails dans img/CREDITS.md). Une charge modifiée change partout où l'exercice revient dans la semaine. Nouvelle semaine : décoche les séries et réactive les séances sautées. Tout reste sur ce téléphone.</p>
     <div class="actions"><button class="mini" type="button" id="bexp">Exporter une sauvegarde</button><button class="mini" type="button" id="bimp">Importer</button></div>
     <input type="file" id="fimp" accept="application/json,.json" hidden>
@@ -235,17 +266,22 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
     S = { loads: {}, done: {}, hist: {}, week: today() };
     Object.keys(START_DONE).forEach(function (d) { START_DONE[d].forEach(function (n, i) { for (var s = 0; s < n; s++) S.done[d + '.' + i + '.' + s] = { c: true }; }); });
   }
-  S.loads = S.loads || {}; S.done = S.done || {}; S.hist = S.hist || {}; S.skip = S.skip || {};
+  function norm(S) { S.loads = S.loads || {}; S.done = S.done || {}; S.hist = S.hist || {}; S.skip = S.skip || {}; S.prev = S.prev || {}; S.mods = S.mods || {}; S.notes = S.notes || {}; S.weeks = S.weeks || []; S.opt = S.opt || { sound: true, wake: true }; return S; }
+  norm(S);
+  function fmtRest(sec) { return sec < 90 ? sec + ' s' : sec % 60 ? Math.floor(sec / 60) + ' min ' + (sec % 60) : (sec / 60) + ' min'; }
   /* Exercices du jour, avec compensation si une séance optionnelle est sautée */
   function itemsFor(p) {
-    var L = p.items.map(function (x) { return x; });
+    var L = p.items.map(function (x, i) {
+      var m = S.mods[p.k + '.' + i]; if (!m) return x;
+      return { ex: x.ex, sets: m.sets || x.sets, reps: m.reps || x.reps, rest: m.restS ? fmtRest(m.restS) : x.rest, restS: m.restS || x.restS, mod: true };
+    });
     if (p.k === 'mer' && S.skip.mar) L.push({ ex: 'hammer', sets: 3, reps: '10–15', rest: '90 s', restS: 90, bonus: 'Remplace la séance du mardi' });
     if (p.k === 'ven' && S.skip.jeu) L = L.map(function (x) { return x.ex === 'chestlight' ? { ex: 'chest', sets: 3, reps: '8–12', rest: '2 min', restS: 120, bonus: 'Normal au lieu de léger : remplace le jeudi' } : x; });
     return L;
   }
   var DAYKEYS = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'];
   var cur = (function () { var k = DAYKEYS[new Date().getDay()]; return PROG.some(function (p) { return p.k === k; }) ? k : 'lun'; })();
-  var nwArm = false, timer = null;
+  var nwArm = false, timer = null, EDIT = '', wake = null, actx = null;
   function save() { lsSet(KEY, S); }
   function today() { var d = new Date(), z = function (n) { return (n < 10 ? '0' : '') + n; }; return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()); }
   function $(s) { return document.querySelector(s); }
@@ -288,16 +324,19 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
     if (c.skip) { $('#list').innerHTML = '<div class="card skipped">Repos de muscu aujourd\'hui. Bonne séance de ' + (P.k === 'mar' ? 'MMA' : 'grappling') + ' !</div>'; $('#newweek').textContent = nwArm ? 'Confirmer : décocher toute la semaine' : 'Nouvelle semaine'; $('#newweek').className = nwArm ? 'cta' : 'mini'; return; }
     $('#list').innerHTML = itemsFor(P).map(function (x, i) {
       var e = EX[x.ex], L = load(x.ex), other = days(x.ex).filter(function (d) { return d !== P.d.toLowerCase(); });
-      var sets = '', all = true, top = true, mr = maxReps(x.reps);
+      var sets = '', all = true, top = true, mr = maxReps(x.reps), pv = S.prev[P.k + '.' + i]; if (pv && pv.ex !== x.ex) pv = null;
       for (var s = 0; s < x.sets; s++) {
         var st = S.done[P.k + '.' + i + '.' + s] || {};
         if (!st.c) all = false; if (!(st.r >= mr)) top = false;
         sets += '<div class="set' + (st.c ? ' on' : '') + '" data-i="' + i + '" data-s="' + s + '"><button type="button" aria-pressed="' + !!st.c + '" aria-label="Série ' + (s + 1) + (st.c ? ' faite' : ' à faire') + '">' + CHECK + '</button>' +
-          '<label>S' + (s + 1) + ' <input type="number" inputmode="numeric" min="0" max="99" value="' + (st.r || '') + '" placeholder="' + mr + '" aria-label="Répétitions série ' + (s + 1) + '"> reps</label></div>';
+          '<label>S' + (s + 1) + ' <input type="number" inputmode="numeric" min="0" max="99" value="' + (st.r || '') + '" placeholder="' + (pv && pv.r && pv.r[s] ? pv.r[s] : mr) + '" aria-label="Répétitions série ' + (s + 1) + '"> reps</label></div>';
       }
       var key = P.k + '.' + i, th = thumbHtml(x.ex, key);
       var h = '<article class="card ex' + (all ? ' done' : '') + '" data-ex="' + x.ex + '"><div class="exhead' + (th ? '' : ' noimg') + '">' + th + '<div><h3><span class="n">' + (i + 1) + '</span>' + esc(e.name) + '</h3>' +
-        '<p class="meta"><b>' + x.sets + ' × ' + x.reps + '</b> · repos ' + x.rest + '</p>' + (x.bonus ? '<span class="bonus">' + esc(x.bonus) + '</span>' : '') + '</div></div>' + bigHtml(x.ex, key);
+        '<p class="meta"><b>' + x.sets + ' × ' + x.reps + '</b> · repos ' + x.rest + (x.mod ? ' · modifié' : '') + '</p>' + (x.bonus ? '<span class="bonus">' + esc(x.bonus) + '</span>' : '') + '</div></div>' + bigHtml(x.ex, key);
+      if (S.notes[x.ex]) h += '<p class="note"><b>Note :</b> ' + esc(S.notes[x.ex]) + '</p>';
+      if (pv) h += '<p class="prev">Semaine dernière : <b>' + (pv.load != null ? nf(pv.load) + ' ' + e.unit.replace(' / haltère', '') : 'sans charge') + '</b>' + (pv.r && pv.r.some(Boolean) ? ' · ' + pv.r.map(function (r) { return r || '–'; }).join(', ') + ' reps' : ' · ' + pv.c + '/' + pv.n + ' séries') + '</p>';
+      if (i === firstLoaded(P) && L > 0) h += warmHtml(e, L);
       if (e.step) {
         h += '<div class="load"><button type="button" class="step" data-l="-" aria-label="Baisser la charge">−</button><div class="kg"><input type="text" inputmode="decimal" autocomplete="off" value="' + (L == null ? '' : String(L).replace('.', ',')) + '" placeholder="–" aria-label="Charge : ' + esc(e.name) + '"><span>' + e.unit + '</span></div><button type="button" class="step" data-l="+" aria-label="Monter la charge">+</button>' +
           (e.of ? '<span class="shared">Lié au <b>' + esc(EX[e.of].name) + '</b> (' + Math.round(e.k * 100) + ' % de ' + nf(load(e.of)) + ' kg) : il change aussi ' + days(e.of).join(', ') + '</span>' : other.length ? '<span class="shared">Même charge <b>' + other.join(', ') + '</b></span>' : '') + '</div>';
@@ -306,11 +345,42 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
       if (all && top && e.step && L != null) h += '<p class="hint">Toutes les séries à ' + mr + ' reps : tu peux monter. <button type="button" class="cta" data-up="1">+' + nf(e.step) + ' kg</button></p>';
       var hs = (S.hist[e.of || x.ex] || []).slice(-4);
       if (hs.length > 1) h += '<p class="histo">Évolution : ' + hs.map(function (y) { return nf(y.v); }).join(' → ') + ' ' + e.unit.replace(' / haltère', '') + '</p>';
-      return h + howHtml(x.ex) + '</article>';
+      h += EDIT === key ? editHtml(P, i, x) : '';
+      return h + '<div class="links" style="margin-top:12px">' + howHtml(x.ex).replace('<div class="links">', '').replace(/<\/div>$/, '') + (EDIT === key ? '' : '<button type="button" class="mini" data-edit="' + key + '">Modifier</button>') + '</div></article>';
     }).join('');
     $('#newweek').textContent = nwArm ? 'Confirmer : décocher toute la semaine' : 'Nouvelle semaine';
     $('#newweek').className = nwArm ? 'cta' : 'mini';
+    renderProgress();
   }
+  /* Premier exercice chargé de la séance : on y propose l'échauffement */
+  function firstLoaded(P) { var IT = itemsFor(P); for (var i = 0; i < IT.length; i++) { var e = EX[IT[i].ex]; if (e.step && load(IT[i].ex) > 0 && IT[i].ex !== 'crunch') return i; } return -1; }
+  function warmHtml(e, L) {
+    var st = e.step || 1, a = Math.max(st, Math.round(L * 0.5 / st) * st), b = Math.max(st, Math.round(L * 0.75 / st) * st), u = e.unit.replace(' / haltère', '');
+    return '<p class="warm">Échauffement avant tes séries : <b>10 reps à ' + nf(a) + ' ' + u + '</b>, puis <b>5 reps à ' + nf(b) + ' ' + u + '</b>, repos 1 min.</p>';
+  }
+  var RESTS = [45, 60, 75, 90, 120, 150, 180, 240];
+  function editHtml(P, i, x) {
+    var key = P.k + '.' + i, base = P.items[i];
+    var h = '<div class="edit" data-ekey="' + key + '"><div class="row2"><label>Séries<span class="cnt"><button type="button" class="step" data-es="-">−</button><b id="esets">' + x.sets + '</b><button type="button" class="step" data-es="+">+</button></span></label>' +
+      '<label>Répétitions<input id="ereps" type="text" value="' + esc(x.reps) + '" placeholder="8–12" autocomplete="off"></label></div>' +
+      '<label>Repos<select id="erest">' + RESTS.map(function (r) { return '<option value="' + r + '"' + (r === x.restS ? ' selected' : '') + '>' + fmtRest(r) + '</option>'; }).join('') + '</select></label>' +
+      '<label>Note (réglage de la machine, consigne…)<input id="enote" type="text" maxlength="80" value="' + esc(S.notes[x.ex] || '') + '" placeholder="Ex. : siège cran 4, dossier 2" autocomplete="off"></label>' +
+      '<div class="actions"><button type="button" class="cta" data-eok="1">Enregistrer</button><button type="button" class="mini" data-eno="1">Annuler</button>' + (S.mods[key] && base ? '<button type="button" class="mini" data-ereset="1">Valeurs d\'origine</button>' : '') + '</div>' +
+      (base ? '' : '<p class="tip">Exercice de compensation : seule la note est enregistrée.</p>') + '</div>';
+    return h;
+  }
+  function renderProgress() {
+    var seen = {}, rows = [];
+    PROG.forEach(function (p) { p.items.forEach(function (x) { var k = EX[x.ex].of || x.ex; if (seen[k] || !EX[k].step) return; seen[k] = 1; var h = S.hist[k] || [], now = load(k); if (now == null) return; var start = h.length ? h[0].v : now; rows.push({ n: EX[k].name, u: EX[k].unit.replace(' / haltère', ''), s: start, c: now }); }); });
+    var h = '<h2>Progrès</h2><ul class="plist">' + rows.map(function (r) {
+      var d = Math.round((r.c - r.s) * 100) / 100;
+      return '<li>' + esc(r.n) + '<span>' + (d ? nf(r.s) + ' → ' : '') + '<b>' + nf(r.c) + ' ' + r.u + '</b>' + (d > 0 ? ' <span class="up">+' + nf(d) + '</span>' : '') + '</span></li>';
+    }).join('') + '</ul>';
+    var W = S.weeks.slice(-8);
+    h += W.length ? '<p class="tip" style="margin-top:12px">Semaines terminées :</p><div class="weeks">' + W.map(function (w) { return '<span>' + esc(fmtD(w.d)) + ' · ' + w.done + '/' + w.tot + '</span>'; }).join('') + '</div>' : '<p class="tip" style="margin-top:12px">Tes semaines apparaîtront ici quand tu toucheras « Nouvelle semaine ».</p>';
+    $('#progress').innerHTML = h;
+  }
+  function fmtD(d) { var x = new Date(d + 'T12:00:00'); return isNaN(x) ? d : x.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }); }
 
   /* ---------- Minuteur de repos ---------- */
   function startTimer(sec, label) {
@@ -320,10 +390,23 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
       el.className = 'timer' + (r === 0 ? ' end' : '');
       el.innerHTML = '<div><div class="t">' + (r === 0 ? 'Go !' : m + ':' + (s < 10 ? '0' : '') + s) + '</div><div class="l">' + (r === 0 ? 'Repos terminé' : 'Repos · ' + esc(label)) + '</div></div>' +
         '<div class="btns">' + (r ? '<button type="button" data-t="add">+30 s</button>' : '') + '<button type="button" data-t="stop">' + (r ? 'Passer' : 'OK') + '</button></div>';
-      if (r === 0) { clearInterval(timer.id); try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (e) {} }
+      if (r === 0) { clearInterval(timer.id); beep(); try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (e) {} }
     }
     timer = { end: end, id: setInterval(tick, 500), label: label }; tick();
   }
+  function unlockAudio() {
+    if (!S.opt.sound || actx) return;
+    try { var C = window.AudioContext || window.webkitAudioContext; if (C) { actx = new C(); var o = actx.createOscillator(), g = actx.createGain(); g.gain.value = 0; o.connect(g); g.connect(actx.destination); o.start(); o.stop(actx.currentTime + 0.01); } } catch (e) { actx = null; }
+  }
+  function beep() {
+    if (!S.opt.sound || !actx) return;
+    try { if (actx.state === 'suspended') actx.resume(); [0, 0.25, 0.5].forEach(function (t) { var o = actx.createOscillator(), g = actx.createGain(); o.frequency.value = 880; g.gain.setValueAtTime(0.0001, actx.currentTime + t); g.gain.exponentialRampToValueAtTime(0.4, actx.currentTime + t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + t + 0.18); o.connect(g); g.connect(actx.destination); o.start(actx.currentTime + t); o.stop(actx.currentTime + t + 0.2); }); } catch (e) {}
+  }
+  async function keepAwake() {
+    if (!S.opt.wake || wake || !('wakeLock' in navigator) || document.visibilityState !== 'visible') return;
+    try { wake = await navigator.wakeLock.request('screen'); wake.addEventListener('release', function () { wake = null; }); } catch (e) { wake = null; }
+  }
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible' && timer) keepAwake(); });
   function stopTimer() { if (timer) clearInterval(timer.id); timer = null; $('#timer').hidden = true; }
   $('#timer').addEventListener('click', function (e) {
     var b = e.target.closest('[data-t]'); if (!b || !timer) return;
@@ -339,6 +422,24 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
   $('#list').addEventListener('click', function (e) {
     var card = e.target.closest('.ex'); if (!card) return;
     var ex = card.getAttribute('data-ex'), P = PROG.filter(function (p) { return p.k === cur; })[0];
+    var ed = e.target.closest('[data-edit]'); if (ed) { EDIT = ed.getAttribute('data-edit'); render(); return; }
+    var box2 = e.target.closest('.edit');
+    if (box2) {
+      var ek = box2.getAttribute('data-ekey'), pi = +ek.split('.')[1], base = P.items[pi];
+      if (e.target.closest('[data-es]')) { var sv = +$('#esets').textContent + (e.target.closest('[data-es]').getAttribute('data-es') === '+' ? 1 : -1); $('#esets').textContent = Math.max(1, Math.min(8, sv)); return; }
+      if (e.target.closest('[data-eno]')) { EDIT = ''; render(); return; }
+      if (e.target.closest('[data-ereset]')) { delete S.mods[ek]; EDIT = ''; save(); render(); return; }
+      if (e.target.closest('[data-eok]')) {
+        var note = $('#enote').value.trim(); if (note) S.notes[ex] = note; else delete S.notes[ex];
+        if (base) {
+          var ns = +$('#esets').textContent, nr = $('#ereps').value.trim().replace(/\s*-\s*/, '–') || base.reps, rs = +$('#erest').value;
+          if (ns === base.sets && nr === base.reps && rs === base.restS) delete S.mods[ek]; else S.mods[ek] = { sets: ns, reps: nr, restS: rs };
+          Object.keys(S.done).forEach(function (k) { var a = k.split('.'); if (a[0] + '.' + a[1] === ek && +a[2] >= ns) delete S.done[k]; });
+        }
+        EDIT = ''; save(); render(); return;
+      }
+      return;
+    }
     var tb = e.target.closest('[data-big]');
     if (tb) { var bk = tb.getAttribute('data-big'); OPEN[bk] = !OPEN[bk]; render(); return; }
     var st = e.target.closest('[data-l]');
@@ -347,6 +448,7 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
     var sb = e.target.closest('.set button'); if (!sb) return;
     var box = sb.closest('.set'), i = +box.getAttribute('data-i'), s = +box.getAttribute('data-s'), k = cur + '.' + i + '.' + s, o = S.done[k] || {};
     o.c = !o.c; S.done[k] = o; save(); render();
+    if (o.c) { unlockAudio(); keepAwake(); }
     if (o.c) {
       var IT = itemsFor(P), x = IT[i], last = !IT.slice(i).some(function (y, j) { for (var z = 0; z < y.sets; z++) if (!(S.done[cur + '.' + (i + j) + '.' + z] || {}).c) return true; return false; });
       if (!last) startTimer(x.restS, EX[x.ex].name); else stopTimer();
@@ -362,7 +464,17 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
   });
   $('#newweek').addEventListener('click', function () {
     if (!nwArm) { nwArm = true; render(); return; }
-    nwArm = false; S.done = {}; S.skip = {}; S.week = today(); save(); stopTimer(); render(); window.scrollTo({ top: 0 });
+    nwArm = false;
+    var tot = 0, dn = 0, prev = {};
+    PROG.forEach(function (p) {
+      var c = dayCount(p); tot += c.t; dn += c.d; if (S.skip[p.k]) return;
+      itemsFor(p).forEach(function (x, i) {
+        var r = [], n = 0; for (var s = 0; s < x.sets; s++) { var st = S.done[p.k + '.' + i + '.' + s] || {}; r.push(st.r || 0); if (st.c) n++; }
+        if (n) prev[p.k + '.' + i] = { ex: x.ex, load: EX[x.ex].step ? load(x.ex) : null, r: r, c: n, n: x.sets };
+      });
+    });
+    if (dn) { S.prev = prev; S.weeks.push({ d: S.week || today(), done: dn, tot: tot }); if (S.weeks.length > 52) S.weeks.shift(); }
+    S.done = {}; S.skip = {}; S.week = today(); EDIT = ''; save(); stopTimer(); render(); window.scrollTo({ top: 0 });
   });
   function bmsg(t, err) { var el = $('#bflash'); el.className = 'flash' + (err ? ' err' : ''); el.textContent = t; }
   $('#bexp').addEventListener('click', async function () {
@@ -377,10 +489,14 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
     rd.onload = function () {
       var d; try { d = JSON.parse(rd.result); } catch (x) { d = null; }
       if (!d || d.app !== 'muscu' || !d.data) { bmsg('Ce fichier n\'est pas une sauvegarde de l\'appli muscu.', true); return; }
-      S = d.data; S.loads = S.loads || {}; S.done = S.done || {}; S.hist = S.hist || {}; S.skip = S.skip || {}; save(); render(); bmsg('Sauvegarde importée.');
+      S = norm(d.data); save(); syncOpts(); render(); bmsg('Sauvegarde importée.');
     };
     rd.readAsText(f); e.target.value = '';
   });
+  function syncOpts() { $('#optsound').checked = !!S.opt.sound; $('#optwake').checked = !!S.opt.wake; }
+  $('#optsound').addEventListener('change', function (e) { S.opt.sound = e.target.checked; save(); if (S.opt.sound) { unlockAudio(); beep(); } });
+  $('#optwake').addEventListener('change', function (e) { S.opt.wake = e.target.checked; save(); if (!S.opt.wake && wake) { wake.release(); wake = null; } });
+  syncOpts();
   render();
   if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
 })();
