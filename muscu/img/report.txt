@@ -1,0 +1,17 @@
+CONVERT-FAIL incline-1 Dumbbell-incline-bench-press-1.png
+CONVERT-FAIL incline-2 Dumbbell-incline-bench-press-2.png
+CONVERT-FAIL pulldown-1 PulldownMachineExercise.JPG
+CONVERT-FAIL pulldown-2 Lat_pulldown_machine_20180112.jpg
+CONVERT-FAIL row-1 Cable-seated-rows-1.png
+CONVERT-FAIL row-2 Cable-seated-rows-2.png
+CONVERT-FAIL lateral-1 Dumbbell-lateral-raises-1.png
+CONVERT-FAIL lateral-2 Dumbbell-lateral-raises-2.png
+CONVERT-FAIL triceps-1 Triceps-pushdown-1.gif
+CONVERT-FAIL triceps-2 Triceps-pushdown-2.gif
+CONVERT-FAIL hammer-1 Hammer-curls-with-rope-1.gif
+CONVERT-FAIL hammer-2 Hammer-curls-with-rope-2.gif
+CONVERT-FAIL wrist-1 Exercise_Wrist_Curls.png
+CONVERT-FAIL reardelt-1 Bent_over_rear_deltoid_raise_with_head_on_bench_1.svg
+CONVERT-FAIL legcurl-1 LyingLegCurlMachineExercise.JPG
+CONVERT-FAIL legcurl-2 Lying_leg_curl_machine_1.svg
+CONVERT-FAIL legpress-1 Leg_Press_Machine.jpg
