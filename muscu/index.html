@@ -112,10 +112,14 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
 .how summary::-webkit-details-marker { display: none; }
 .how summary::before { content: "▸ "; }
 .how[open] summary::before { content: "▾ "; }
-.pics { margin: 10px 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.pics.one { grid-template-columns: 1fr; }
-.pics img { width: 100%; height: 150px; object-fit: contain; background: #fff; border-radius: 8px; border: 1px solid var(--line); display: block; }
-.pics.one img { height: 180px; }
+.exhead { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 12px; align-items: center; }
+.exhead.noimg { grid-template-columns: minmax(0, 1fr); }
+.thumb { width: 84px; height: 84px; padding: 0; border: 1px solid var(--line); border-radius: 8px; background: #fff; overflow: hidden; position: relative; }
+.thumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.thumb span { position: absolute; right: 3px; bottom: 3px; font-size: 10px; font-weight: 700; background: rgba(16,21,33,.75); color: #fff; border-radius: 4px; padding: 1px 4px; }
+.big { margin: 10px 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.big.one { grid-template-columns: 1fr; }
+.big img { width: 100%; height: 170px; object-fit: contain; background: #fff; border-radius: 8px; border: 1px solid var(--line); display: block; }
 .links { margin: 10px 0 0; display: flex; gap: 8px; flex-wrap: wrap; font-size: 14px; }
 .links a { color: var(--accent); font-weight: 600; text-decoration: none; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; }
 .credit { margin: 6px 0 0; font-size: 11px; color: var(--muted); }
@@ -187,10 +191,14 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
     wrist: 'flexion des poignets haltères assis', crunch: 'crunch poulie haute à genoux', reardelt: 'oiseau haltères buste penché',
     goblet: 'goblet squat haltère', legcurl: 'leg curl allongé machine', revcrunch: 'reverse crunch au sol'
   };
-  function picsHtml(ex) {
-    var pics = PICS[ex] || [];
-    if (!pics.length) return '';
-    return '<div class="pics' + (pics.length === 1 ? ' one' : '') + '">' + pics.map(function (f, n) { return '<img loading="lazy" decoding="async" alt="' + esc(EX[ex].name) + (pics.length > 1 ? (n ? ' : fin du mouvement' : ' : début du mouvement') : '') + '" src="img/' + f + '.jpg">'; }).join('') + '</div>' +
+  var OPEN = {};
+  function thumbHtml(ex, key) {
+    var pics = PICS[ex] || []; if (!pics.length) return '';
+    return '<button type="button" class="thumb" data-big="' + key + '" aria-label="Agrandir l\'image : ' + esc(EX[ex].name) + '"><img decoding="async" alt="" src="img/' + pics[0] + '.jpg">' + (pics.length > 1 ? '<span>+1</span>' : '') + '</button>';
+  }
+  function bigHtml(ex, key) {
+    var pics = PICS[ex] || []; if (!pics.length || !OPEN[key]) return '';
+    return '<div class="big' + (pics.length === 1 ? ' one' : '') + '">' + pics.map(function (f, n) { return '<img decoding="async" alt="' + esc(EX[ex].name) + (pics.length > 1 ? (n ? ' : fin du mouvement' : ' : début du mouvement') : '') + '" src="img/' + f + '.jpg">'; }).join('') + '</div>' +
       (PICNOTE[ex] ? '<p class="credit">' + esc(PICNOTE[ex]) + '</p>' : '');
   }
   function howHtml(ex) {
@@ -287,8 +295,9 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
         sets += '<div class="set' + (st.c ? ' on' : '') + '" data-i="' + i + '" data-s="' + s + '"><button type="button" aria-pressed="' + !!st.c + '" aria-label="Série ' + (s + 1) + (st.c ? ' faite' : ' à faire') + '">' + CHECK + '</button>' +
           '<label>S' + (s + 1) + ' <input type="number" inputmode="numeric" min="0" max="99" value="' + (st.r || '') + '" placeholder="' + mr + '" aria-label="Répétitions série ' + (s + 1) + '"> reps</label></div>';
       }
-      var h = '<article class="card ex' + (all ? ' done' : '') + '" data-ex="' + x.ex + '"><h3><span class="n">' + (i + 1) + '</span>' + esc(e.name) + '</h3>' + picsHtml(x.ex) +
-        '<p class="meta"><b>' + x.sets + ' × ' + x.reps + '</b> · repos ' + x.rest + '</p>' + (x.bonus ? '<span class="bonus">' + esc(x.bonus) + '</span>' : '');
+      var key = P.k + '.' + i, th = thumbHtml(x.ex, key);
+      var h = '<article class="card ex' + (all ? ' done' : '') + '" data-ex="' + x.ex + '"><div class="exhead' + (th ? '' : ' noimg') + '">' + th + '<div><h3><span class="n">' + (i + 1) + '</span>' + esc(e.name) + '</h3>' +
+        '<p class="meta"><b>' + x.sets + ' × ' + x.reps + '</b> · repos ' + x.rest + '</p>' + (x.bonus ? '<span class="bonus">' + esc(x.bonus) + '</span>' : '') + '</div></div>' + bigHtml(x.ex, key);
       if (e.step) {
         h += '<div class="load"><button type="button" class="step" data-l="-" aria-label="Baisser la charge">−</button><div class="kg"><input type="text" inputmode="decimal" autocomplete="off" value="' + (L == null ? '' : String(L).replace('.', ',')) + '" placeholder="–" aria-label="Charge : ' + esc(e.name) + '"><span>' + e.unit + '</span></div><button type="button" class="step" data-l="+" aria-label="Monter la charge">+</button>' +
           (e.of ? '<span class="shared">Lié au <b>' + esc(EX[e.of].name) + '</b> (' + Math.round(e.k * 100) + ' % de ' + nf(load(e.of)) + ' kg) : il change aussi ' + days(e.of).join(', ') + '</span>' : other.length ? '<span class="shared">Même charge <b>' + other.join(', ') + '</b></span>' : '') + '</div>';
@@ -330,6 +339,8 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
   $('#list').addEventListener('click', function (e) {
     var card = e.target.closest('.ex'); if (!card) return;
     var ex = card.getAttribute('data-ex'), P = PROG.filter(function (p) { return p.k === cur; })[0];
+    var tb = e.target.closest('[data-big]');
+    if (tb) { var bk = tb.getAttribute('data-big'); OPEN[bk] = !OPEN[bk]; render(); return; }
     var st = e.target.closest('[data-l]');
     if (st) { var L = load(ex), step = EX[ex].step; setLoad(ex, Math.max(0, (L == null ? 0 : L) + (st.getAttribute('data-l') === '+' ? step : -step))); render(); return; }
     if (e.target.closest('[data-up]')) { setLoad(ex, (load(ex) || 0) + EX[ex].step); render(); return; }
