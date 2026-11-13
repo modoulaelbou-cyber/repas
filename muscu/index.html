@@ -151,7 +151,7 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
   /* ---------- Exercices : la charge est stockée une seule fois par exercice ---------- */
   var EX = {
     chest: { name: 'Chest press machine', load: 40, step: 2.5, unit: 'kg' },
-    chestlight: { name: 'Chest press léger', load: 30, step: 2.5, unit: 'kg' },
+    chestlight: { name: 'Chest press léger', load: 30, step: 2.5, unit: 'kg', of: 'chest', k: 0.75 },
     incline: { name: 'Développé incliné haltères', load: 12, step: 1, unit: 'kg / haltère' },
     pulldown: { name: 'Tirage vertical (lat pulldown)', load: 35, step: 2.5, unit: 'kg' },
     row: { name: 'Rowing poulie assis', load: 35, step: 2.5, unit: 'kg' },
@@ -240,13 +240,19 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
   function $(s) { return document.querySelector(s); }
   function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
   function nf(n) { return Number(n).toLocaleString('fr-FR', { maximumFractionDigits: 2 }); }
-  function load(ex) { return Object.prototype.hasOwnProperty.call(S.loads, ex) ? S.loads[ex] : EX[ex].load; }
+  function r25(v) { return Math.round(v / 2.5) * 2.5; }
+  function load(ex) {
+    var e = EX[ex];
+    if (e.of) { var b = load(e.of); return b == null ? null : r25(b * e.k); }   // exercice lié : pourcentage d'un autre
+    return Object.prototype.hasOwnProperty.call(S.loads, ex) ? S.loads[ex] : e.load;
+  }
   function days(ex) { return PROG.filter(function (p) { return !S.skip[p.k] && itemsFor(p).some(function (x) { return x.ex === ex; }); }).map(function (p) { return p.d.toLowerCase(); }); }
   function maxReps(r) { var m = String(r).match(/(\d+)\D*$/); return m ? +m[1] : 0; }
   function dayCount(p) { var t = 0, d = 0; if (S.skip[p.k]) return { t: 0, d: 0, skip: true }; itemsFor(p).forEach(function (x, i) { for (var s = 0; s < x.sets; s++) { t++; if ((S.done[p.k + '.' + i + '.' + s] || {}).c) d++; } }); return { t: t, d: d }; }
 
   /* Change la charge d'un exercice : une seule valeur, donc partout dans la semaine */
   function setLoad(ex, v) {
+    if (EX[ex].of) { if (v != null && v !== '' && !isNaN(v)) setLoad(EX[ex].of, r25(v / EX[ex].k)); return; }
     v = v == null || v === '' || isNaN(v) ? null : Math.max(0, Math.round(v * 100) / 100);
     var old = load(ex); if (old === v) return;
     S.loads[ex] = v;
@@ -282,11 +288,11 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
         '<p class="meta"><b>' + x.sets + ' × ' + x.reps + '</b> · repos ' + x.rest + '</p>' + (x.bonus ? '<span class="bonus">' + esc(x.bonus) + '</span>' : '');
       if (e.step) {
         h += '<div class="load"><button type="button" class="step" data-l="-" aria-label="Baisser la charge">−</button><div class="kg"><input type="text" inputmode="decimal" autocomplete="off" value="' + (L == null ? '' : String(L).replace('.', ',')) + '" placeholder="–" aria-label="Charge : ' + esc(e.name) + '"><span>' + e.unit + '</span></div><button type="button" class="step" data-l="+" aria-label="Monter la charge">+</button>' +
-          (other.length ? '<span class="shared">Même charge <b>' + other.join(', ') + '</b></span>' : '') + '</div>';
+          (e.of ? '<span class="shared">Lié au <b>' + esc(EX[e.of].name) + '</b> (' + Math.round(e.k * 100) + ' % de ' + nf(load(e.of)) + ' kg) : il change aussi ' + days(e.of).join(', ') + '</span>' : other.length ? '<span class="shared">Même charge <b>' + other.join(', ') + '</b></span>' : '') + '</div>';
       } else h += '<p class="meta" style="margin-top:8px">Poids du corps</p>';
       h += '<div class="sets">' + sets + '</div>';
       if (all && top && e.step && L != null) h += '<p class="hint">Toutes les séries à ' + mr + ' reps : tu peux monter. <button type="button" class="cta" data-up="1">+' + nf(e.step) + ' kg</button></p>';
-      var hs = (S.hist[x.ex] || []).slice(-4);
+      var hs = (S.hist[e.of || x.ex] || []).slice(-4);
       if (hs.length > 1) h += '<p class="histo">Évolution : ' + hs.map(function (y) { return nf(y.v); }).join(' → ') + ' ' + e.unit.replace(' / haltère', '') + '</p>';
       return h + howHtml(x.ex) + '</article>';
     }).join('');

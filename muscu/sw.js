@@ -1,5 +1,5 @@
 /* Service worker de l'appli muscu : cache pour marcher sans connexion. */
-var CACHE = 'muscu-v2';
+var CACHE = 'muscu-v3';
 var FILES = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png'];
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(FILES); }).then(function () { return self.skipWaiting(); }));
