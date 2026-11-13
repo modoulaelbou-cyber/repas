@@ -106,6 +106,22 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
 .timer.end { background: var(--ok); color: var(--on); }
 .timer .btns { display: flex; gap: 8px; }
 .timer button { min-height: 44px; padding: 6px 14px; border: 0; border-radius: 8px; background: var(--bg); color: var(--ink); font-weight: 600; }
+/* Voir la machine */
+.how { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px; }
+.how summary { cursor: pointer; font-size: 14px; font-weight: 600; color: var(--accent); list-style: none; }
+.how summary::-webkit-details-marker { display: none; }
+.how summary::before { content: "▸ "; }
+.how[open] summary::before { content: "▾ "; }
+.pics { margin: 10px 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
+.pics img { width: 100%; height: 160px; object-fit: contain; background: #fff; border-radius: 8px; border: 1px solid var(--line); }
+.links { margin: 10px 0 0; display: flex; gap: 8px; flex-wrap: wrap; font-size: 14px; }
+.links a { color: var(--accent); font-weight: 600; text-decoration: none; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; }
+.credit { margin: 6px 0 0; font-size: 11px; color: var(--muted); }
+.credit a { color: inherit; }
+/* Séance optionnelle et compensation */
+.opt { margin-top: 8px; padding: 10px 12px; border-radius: 8px; background: var(--surface2); font-size: 14px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.skipped { padding: 18px 16px; text-align: center; color: var(--muted); }
+.bonus { display: inline-block; margin-top: 6px; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--warn); }
 @media (prefers-reduced-motion: reduce) { .track i { transition: none; } }
 </style>
 </head>
@@ -121,7 +137,7 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
   <main class="list" id="list" aria-live="polite"></main>
   <section class="foot" aria-label="Semaine et sauvegarde">
     <div class="actions"><button class="mini" type="button" id="newweek">Nouvelle semaine</button><span class="tip" id="nwtip">Décoche toutes les séries, garde les charges.</span></div>
-    <p class="tip">Une charge modifiée change partout où l'exercice revient dans la semaine. Tout reste sur ce téléphone.</p>
+    <p class="tip">Une charge modifiée change partout où l'exercice revient dans la semaine. Nouvelle semaine : décoche les séries et réactive les séances sautées. Tout reste sur ce téléphone.</p>
     <div class="actions"><button class="mini" type="button" id="bexp">Exporter une sauvegarde</button><button class="mini" type="button" id="bimp">Importer</button></div>
     <input type="file" id="fimp" accept="application/json,.json" hidden>
     <p class="flash" id="bflash" role="status"></p>
@@ -150,18 +166,46 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
     legcurl: { name: 'Leg curl allongé', load: 23, step: 2.5, unit: 'kg' },
     revcrunch: { name: 'Reverse crunch', load: null, step: 0, unit: '' }
   };
+  /* Images libres de droits (Wikimedia Commons) et recherches pour voir la machine */
+  var PICS = {
+    incline: ['Dumbbell-incline-bench-press-1.png', 'Dumbbell-incline-bench-press-2.png'],
+    pulldown: ['Lat_pulldown_machine_20180112.jpg', 'PulldownMachineExercise.JPG'],
+    row: ['Cable-seated-rows-1.png', 'Cable-seated-rows-2.png'],
+    lateral: ['Dumbbell-lateral-raises-1.png', 'Dumbbell-lateral-raises-2.png'],
+    triceps: ['Triceps-pushdown-1.gif', 'Triceps-pushdown-2.gif'],
+    hammer: ['Hammer-curls-with-rope-1.gif', 'Hammer-curls-with-rope-2.gif'],
+    wrist: ['Exercise_Wrist_Curls.png'],
+    reardelt: ['Bent_over_rear_deltoid_raise_with_head_on_bench_1.svg'],
+    legcurl: ['LyingLegCurlMachineExercise.JPG', 'Lying_leg_curl_machine_1.svg']
+  };
+  var QUERY = {
+    chest: 'chest press machine assis', chestlight: 'chest press machine assis', incline: 'développé incliné haltères',
+    pulldown: 'tirage vertical poulie haute', row: 'rowing poulie basse assis', lateral: 'élévations latérales haltères',
+    triceps: 'extension triceps poulie haute', curl: 'curl biceps poulie basse barre', hammer: 'curl marteau corde poulie',
+    wrist: 'flexion des poignets haltères assis', crunch: 'crunch poulie haute à genoux', reardelt: 'oiseau haltères buste penché',
+    goblet: 'goblet squat haltère', legcurl: 'leg curl allongé machine', revcrunch: 'reverse crunch au sol'
+  };
+  function howHtml(ex) {
+    var pics = PICS[ex] || [], q = QUERY[ex] || EX[ex].name, h = '<details class="how"><summary>Voir la machine et le mouvement</summary>';
+    if (pics.length) {
+      h += '<div class="pics">' + pics.map(function (f) { return '<img loading="lazy" alt="' + esc(EX[ex].name) + '" src="https://commons.wikimedia.org/wiki/Special:FilePath/' + encodeURIComponent(f) + '?width=400" onerror="this.remove()">'; }).join('') + '</div>' +
+        '<p class="credit">Images : <a href="https://commons.wikimedia.org/wiki/File:' + encodeURIComponent(pics[0]) + '" target="_blank" rel="noopener">Wikimedia Commons</a>, licence libre.</p>';
+    }
+    h += '<div class="links"><a href="https://www.google.com/search?tbm=isch&q=' + encodeURIComponent(q) + '" target="_blank" rel="noopener">Plus de photos</a><a href="https://www.youtube.com/results?search_query=' + encodeURIComponent('tuto ' + q) + '" target="_blank" rel="noopener">Vidéo du mouvement</a></div></details>';
+    return h;
+  }
   function it(ex, sets, reps, rest, restS) { return { ex: ex, sets: sets, reps: reps, rest: rest, restS: restS }; }
   var PROG = [
     { k: 'lun', d: 'Lundi', t: 'Haut du corps A', items: [
       it('chest', 4, '6–10', '2–3 min', 150), it('incline', 3, '8–12', '2 min', 120), it('pulldown', 3, '8–12', '2 min', 120),
       it('row', 3, '8–12', '2 min', 120), it('lateral', 3, '12–20', '60–90 s', 75), it('triceps', 2, '10–15', '60–90 s', 75)] },
-    { k: 'mar', d: 'Mardi', t: 'Bras, avant-bras et abdos', items: [
+    { k: 'mar', d: 'Mardi', t: 'Bras, avant-bras et abdos', opt: true, items: [
       it('curl', 3, '8–12', '90 s', 90), it('hammer', 3, '10–15', '90 s', 90), it('wrist', 2, '12–20', '60 s', 60),
       it('triceps', 3, '10–15', '60–90 s', 75), it('crunch', 3, '10–15', '60–90 s', 75)] },
     { k: 'mer', d: 'Mercredi', t: 'Haut du corps B', items: [
       it('pulldown', 3, '8–12', '2 min', 120), it('row', 3, '8–12', '2 min', 120), it('reardelt', 3, '12–20', '60–90 s', 75),
       it('curl', 3, '8–12', '90 s', 90), it('wrist', 2, '12–20', '60 s', 60)] },
-    { k: 'jeu', d: 'Jeudi', t: 'Pecs, épaules, triceps et abdos', items: [
+    { k: 'jeu', d: 'Jeudi', t: 'Pecs, épaules, triceps et abdos', opt: true, items: [
       it('chest', 3, '8–12', '2 min', 120), it('lateral', 3, '12–20', '60–90 s', 75), it('triceps', 3, '10–15', '60–90 s', 75),
       it('crunch', 3, '10–15', '60–90 s', 75)] },
     { k: 'ven', d: 'Vendredi', t: 'Jambes, pecs léger et abdos', items: [
@@ -180,7 +224,14 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
     S = { loads: {}, done: {}, hist: {}, week: today() };
     Object.keys(START_DONE).forEach(function (d) { START_DONE[d].forEach(function (n, i) { for (var s = 0; s < n; s++) S.done[d + '.' + i + '.' + s] = { c: true }; }); });
   }
-  S.loads = S.loads || {}; S.done = S.done || {}; S.hist = S.hist || {};
+  S.loads = S.loads || {}; S.done = S.done || {}; S.hist = S.hist || {}; S.skip = S.skip || {};
+  /* Exercices du jour, avec compensation si une séance optionnelle est sautée */
+  function itemsFor(p) {
+    var L = p.items.map(function (x) { return x; });
+    if (p.k === 'mer' && S.skip.mar) L.push({ ex: 'hammer', sets: 3, reps: '10–15', rest: '90 s', restS: 90, bonus: 'Remplace la séance du mardi' });
+    if (p.k === 'ven' && S.skip.jeu) L = L.map(function (x) { return x.ex === 'chestlight' ? { ex: 'chest', sets: 3, reps: '8–12', rest: '2 min', restS: 120, bonus: 'Normal au lieu de léger : remplace le jeudi' } : x; });
+    return L;
+  }
   var DAYKEYS = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'];
   var cur = (function () { var k = DAYKEYS[new Date().getDay()]; return PROG.some(function (p) { return p.k === k; }) ? k : 'lun'; })();
   var nwArm = false, timer = null;
@@ -190,9 +241,9 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
   function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
   function nf(n) { return Number(n).toLocaleString('fr-FR', { maximumFractionDigits: 2 }); }
   function load(ex) { return Object.prototype.hasOwnProperty.call(S.loads, ex) ? S.loads[ex] : EX[ex].load; }
-  function days(ex) { return PROG.filter(function (p) { return p.items.some(function (x) { return x.ex === ex; }); }).map(function (p) { return p.d.toLowerCase(); }); }
+  function days(ex) { return PROG.filter(function (p) { return !S.skip[p.k] && itemsFor(p).some(function (x) { return x.ex === ex; }); }).map(function (p) { return p.d.toLowerCase(); }); }
   function maxReps(r) { var m = String(r).match(/(\d+)\D*$/); return m ? +m[1] : 0; }
-  function dayCount(p) { var t = 0, d = 0; p.items.forEach(function (x, i) { for (var s = 0; s < x.sets; s++) { t++; if ((S.done[p.k + '.' + i + '.' + s] || {}).c) d++; } }); return { t: t, d: d }; }
+  function dayCount(p) { var t = 0, d = 0; if (S.skip[p.k]) return { t: 0, d: 0, skip: true }; itemsFor(p).forEach(function (x, i) { for (var s = 0; s < x.sets; s++) { t++; if ((S.done[p.k + '.' + i + '.' + s] || {}).c) d++; } }); return { t: t, d: d }; }
 
   /* Change la charge d'un exercice : une seule valeur, donc partout dans la semaine */
   function setLoad(ex, v) {
@@ -211,11 +262,14 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
     $('#prog').innerHTML = '<div class="lab"><span>Semaine</span><span><b>' + dn + '</b> / ' + tot + ' séries</span></div><div class="track"><i style="width:' + (tot ? dn / tot * 100 : 0) + '%"></i></div>';
     $('#days').innerHTML = PROG.map(function (p) {
       var c = dayCount(p);
-      return '<button type="button" data-d="' + p.k + '" aria-pressed="' + (p.k === cur) + '" class="' + (c.d === c.t ? 'full' : '') + '">' + p.d.slice(0, 3) + '<small>' + (c.d === c.t ? '✓' : c.d + '/' + c.t) + '</small></button>';
+      return '<button type="button" data-d="' + p.k + '" aria-pressed="' + (p.k === cur) + '" class="' + (!c.skip && c.d === c.t ? 'full' : '') + '">' + p.d.slice(0, 3) + '<small>' + (c.skip ? 'sautée' : c.d === c.t ? '✓' : c.d + '/' + c.t) + '</small></button>';
     }).join('');
     var P = PROG.filter(function (p) { return p.k === cur; })[0], c = dayCount(P);
-    $('#dayhead').innerHTML = '<h2>' + P.d + '</h2><p>' + esc(P.t) + ' · ' + c.d + ' / ' + c.t + ' séries</p>';
-    $('#list').innerHTML = P.items.map(function (x, i) {
+    $('#dayhead').innerHTML = '<h2>' + P.d + '</h2><p>' + esc(P.t) + (c.skip ? '' : ' · ' + c.d + ' / ' + c.t + ' séries') + '</p>' +
+      (P.opt ? '<div class="opt"><span>' + (S.skip[P.k] ? 'Séance sautée cette semaine. ' + (P.k === 'mar' ? 'Le mercredi a 3 séries de curl marteau en plus.' : 'Le vendredi, le chest press passe en normal.') : 'Séance optionnelle : seulement si tu es en pleine forme.') + '</span>' +
+        '<button type="button" class="' + (S.skip[P.k] ? 'mini' : 'cta') + '" id="skipbtn">' + (S.skip[P.k] ? 'Je la fais finalement' : 'Je saute cette séance') + '</button></div>' : '');
+    if (c.skip) { $('#list').innerHTML = '<div class="card skipped">Repos de muscu aujourd\'hui. Bonne séance de ' + (P.k === 'mar' ? 'MMA' : 'grappling') + ' !</div>'; $('#newweek').textContent = nwArm ? 'Confirmer : décocher toute la semaine' : 'Nouvelle semaine'; $('#newweek').className = nwArm ? 'cta' : 'mini'; return; }
+    $('#list').innerHTML = itemsFor(P).map(function (x, i) {
       var e = EX[x.ex], L = load(x.ex), other = days(x.ex).filter(function (d) { return d !== P.d.toLowerCase(); });
       var sets = '', all = true, top = true, mr = maxReps(x.reps);
       for (var s = 0; s < x.sets; s++) {
@@ -225,7 +279,7 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
           '<label>S' + (s + 1) + ' <input type="number" inputmode="numeric" min="0" max="99" value="' + (st.r || '') + '" placeholder="' + mr + '" aria-label="Répétitions série ' + (s + 1) + '"> reps</label></div>';
       }
       var h = '<article class="card ex' + (all ? ' done' : '') + '" data-ex="' + x.ex + '"><h3><span class="n">' + (i + 1) + '</span>' + esc(e.name) + '</h3>' +
-        '<p class="meta"><b>' + x.sets + ' × ' + x.reps + '</b> · repos ' + x.rest + '</p>';
+        '<p class="meta"><b>' + x.sets + ' × ' + x.reps + '</b> · repos ' + x.rest + '</p>' + (x.bonus ? '<span class="bonus">' + esc(x.bonus) + '</span>' : '');
       if (e.step) {
         h += '<div class="load"><button type="button" class="step" data-l="-" aria-label="Baisser la charge">−</button><div class="kg"><input type="text" inputmode="decimal" autocomplete="off" value="' + (L == null ? '' : String(L).replace('.', ',')) + '" placeholder="–" aria-label="Charge : ' + esc(e.name) + '"><span>' + e.unit + '</span></div><button type="button" class="step" data-l="+" aria-label="Monter la charge">+</button>' +
           (other.length ? '<span class="shared">Même charge <b>' + other.join(', ') + '</b></span>' : '') + '</div>';
@@ -234,7 +288,7 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
       if (all && top && e.step && L != null) h += '<p class="hint">Toutes les séries à ' + mr + ' reps : tu peux monter. <button type="button" class="cta" data-up="1">+' + nf(e.step) + ' kg</button></p>';
       var hs = (S.hist[x.ex] || []).slice(-4);
       if (hs.length > 1) h += '<p class="histo">Évolution : ' + hs.map(function (y) { return nf(y.v); }).join(' → ') + ' ' + e.unit.replace(' / haltère', '') + '</p>';
-      return h + '</article>';
+      return h + howHtml(x.ex) + '</article>';
     }).join('');
     $('#newweek').textContent = nwArm ? 'Confirmer : décocher toute la semaine' : 'Nouvelle semaine';
     $('#newweek').className = nwArm ? 'cta' : 'mini';
@@ -259,6 +313,10 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
   });
 
   /* ---------- Événements ---------- */
+  $('#dayhead').addEventListener('click', function (e) {
+    if (e.target.id !== 'skipbtn') return;
+    S.skip[cur] = !S.skip[cur]; save(); stopTimer(); render();
+  });
   $('#days').addEventListener('click', function (e) { var b = e.target.closest('[data-d]'); if (!b) return; cur = b.getAttribute('data-d'); nwArm = false; render(); window.scrollTo({ top: 0 }); });
   $('#list').addEventListener('click', function (e) {
     var card = e.target.closest('.ex'); if (!card) return;
@@ -270,7 +328,7 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
     var box = sb.closest('.set'), i = +box.getAttribute('data-i'), s = +box.getAttribute('data-s'), k = cur + '.' + i + '.' + s, o = S.done[k] || {};
     o.c = !o.c; S.done[k] = o; save(); render();
     if (o.c) {
-      var x = P.items[i], last = !P.items.slice(i).some(function (y, j) { for (var z = 0; z < y.sets; z++) if (!(S.done[cur + '.' + (i + j) + '.' + z] || {}).c) return true; return false; });
+      var IT = itemsFor(P), x = IT[i], last = !IT.slice(i).some(function (y, j) { for (var z = 0; z < y.sets; z++) if (!(S.done[cur + '.' + (i + j) + '.' + z] || {}).c) return true; return false; });
       if (!last) startTimer(x.restS, EX[x.ex].name); else stopTimer();
     }
   });
@@ -284,7 +342,7 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
   });
   $('#newweek').addEventListener('click', function () {
     if (!nwArm) { nwArm = true; render(); return; }
-    nwArm = false; S.done = {}; S.week = today(); save(); stopTimer(); render(); window.scrollTo({ top: 0 });
+    nwArm = false; S.done = {}; S.skip = {}; S.week = today(); save(); stopTimer(); render(); window.scrollTo({ top: 0 });
   });
   function bmsg(t, err) { var el = $('#bflash'); el.className = 'flash' + (err ? ' err' : ''); el.textContent = t; }
   $('#bexp').addEventListener('click', async function () {
@@ -299,7 +357,7 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
     rd.onload = function () {
       var d; try { d = JSON.parse(rd.result); } catch (x) { d = null; }
       if (!d || d.app !== 'muscu' || !d.data) { bmsg('Ce fichier n\'est pas une sauvegarde de l\'appli muscu.', true); return; }
-      S = d.data; S.loads = S.loads || {}; S.done = S.done || {}; S.hist = S.hist || {}; save(); render(); bmsg('Sauvegarde importée.');
+      S = d.data; S.loads = S.loads || {}; S.done = S.done || {}; S.hist = S.hist || {}; S.skip = S.skip || {}; save(); render(); bmsg('Sauvegarde importée.');
     };
     rd.readAsText(f); e.target.value = '';
   });
