@@ -112,8 +112,10 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
 .how summary::-webkit-details-marker { display: none; }
 .how summary::before { content: "▸ "; }
 .how[open] summary::before { content: "▾ "; }
-.pics { margin: 10px 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
-.pics img { width: 100%; height: 160px; object-fit: contain; background: #fff; border-radius: 8px; border: 1px solid var(--line); }
+.pics { margin: 10px 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pics.one { grid-template-columns: 1fr; }
+.pics img { width: 100%; height: 150px; object-fit: contain; background: #fff; border-radius: 8px; border: 1px solid var(--line); display: block; }
+.pics.one img { height: 180px; }
 .links { margin: 10px 0 0; display: flex; gap: 8px; flex-wrap: wrap; font-size: 14px; }
 .links a { color: var(--accent); font-weight: 600; text-decoration: none; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; }
 .credit { margin: 6px 0 0; font-size: 11px; color: var(--muted); }
@@ -137,7 +139,7 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
   <main class="list" id="list" aria-live="polite"></main>
   <section class="foot" aria-label="Semaine et sauvegarde">
     <div class="actions"><button class="mini" type="button" id="newweek">Nouvelle semaine</button><span class="tip" id="nwtip">Décoche toutes les séries, garde les charges.</span></div>
-    <p class="tip">Une charge modifiée change partout où l'exercice revient dans la semaine. Nouvelle semaine : décoche les séries et réactive les séances sautées. Tout reste sur ce téléphone.</p>
+    <p class="tip">Images : Wikimedia Commons, licences libres (détails dans img/CREDITS.md). Une charge modifiée change partout où l'exercice revient dans la semaine. Nouvelle semaine : décoche les séries et réactive les séances sautées. Tout reste sur ce téléphone.</p>
     <div class="actions"><button class="mini" type="button" id="bexp">Exporter une sauvegarde</button><button class="mini" type="button" id="bimp">Importer</button></div>
     <input type="file" id="fimp" accept="application/json,.json" hidden>
     <p class="flash" id="bflash" role="status"></p>
@@ -168,15 +170,15 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
   };
   /* Images libres de droits (Wikimedia Commons) et recherches pour voir la machine */
   var PICS = {
-    incline: ['Dumbbell-incline-bench-press-1.png', 'Dumbbell-incline-bench-press-2.png'],
-    pulldown: ['Lat_pulldown_machine_20180112.jpg', 'PulldownMachineExercise.JPG'],
-    row: ['Cable-seated-rows-1.png', 'Cable-seated-rows-2.png'],
-    lateral: ['Dumbbell-lateral-raises-1.png', 'Dumbbell-lateral-raises-2.png'],
-    triceps: ['Triceps-pushdown-1.gif', 'Triceps-pushdown-2.gif'],
-    hammer: ['Hammer-curls-with-rope-1.gif', 'Hammer-curls-with-rope-2.gif'],
-    wrist: ['Exercise_Wrist_Curls.png'],
-    reardelt: ['Bent_over_rear_deltoid_raise_with_head_on_bench_1.svg'],
-    legcurl: ['LyingLegCurlMachineExercise.JPG', 'Lying_leg_curl_machine_1.svg']
+    chest: ['chest-1'], chestlight: ['chest-1'], incline: ['incline-1', 'incline-2'], pulldown: ['pulldown-1', 'pulldown-2'],
+    row: ['row-1', 'row-2'], lateral: ['lateral-1', 'lateral-2'], triceps: ['triceps-1', 'triceps-2'], hammer: ['hammer-1', 'hammer-2'],
+    wrist: ['wrist-1'], crunch: ['crunch-1'], reardelt: ['reardelt-1'], goblet: ['goblet-1'], legcurl: ['legcurl-1', 'legcurl-2']
+  };
+  var PICNOTE = {
+    chest: 'Ta machine est sans doute droite : même principe, tu pousses les poignées devant toi.',
+    chestlight: 'Ta machine est sans doute droite : même principe, tu pousses les poignées devant toi.',
+    crunch: 'Ici assis ; toi tu fais pareil à genoux, la corde derrière la tête.',
+    goblet: 'Même descente ; pour le goblet, tiens un seul haltère contre la poitrine.'
   };
   var QUERY = {
     chest: 'chest press machine assis', chestlight: 'chest press machine assis', incline: 'développé incliné haltères',
@@ -185,14 +187,15 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
     wrist: 'flexion des poignets haltères assis', crunch: 'crunch poulie haute à genoux', reardelt: 'oiseau haltères buste penché',
     goblet: 'goblet squat haltère', legcurl: 'leg curl allongé machine', revcrunch: 'reverse crunch au sol'
   };
+  function picsHtml(ex) {
+    var pics = PICS[ex] || [];
+    if (!pics.length) return '';
+    return '<div class="pics' + (pics.length === 1 ? ' one' : '') + '">' + pics.map(function (f, n) { return '<img loading="lazy" decoding="async" alt="' + esc(EX[ex].name) + (pics.length > 1 ? (n ? ' : fin du mouvement' : ' : début du mouvement') : '') + '" src="img/' + f + '.jpg">'; }).join('') + '</div>' +
+      (PICNOTE[ex] ? '<p class="credit">' + esc(PICNOTE[ex]) + '</p>' : '');
+  }
   function howHtml(ex) {
-    var pics = PICS[ex] || [], q = QUERY[ex] || EX[ex].name, h = '<details class="how"><summary>Voir la machine et le mouvement</summary>';
-    if (pics.length) {
-      h += '<div class="pics">' + pics.map(function (f) { return '<img loading="lazy" alt="' + esc(EX[ex].name) + '" src="https://commons.wikimedia.org/wiki/Special:FilePath/' + encodeURIComponent(f) + '?width=400" onerror="this.remove()">'; }).join('') + '</div>' +
-        '<p class="credit">Images : <a href="https://commons.wikimedia.org/wiki/File:' + encodeURIComponent(pics[0]) + '" target="_blank" rel="noopener">Wikimedia Commons</a>, licence libre.</p>';
-    }
-    h += '<div class="links"><a href="https://www.google.com/search?tbm=isch&q=' + encodeURIComponent(q) + '" target="_blank" rel="noopener">Plus de photos</a><a href="https://www.youtube.com/results?search_query=' + encodeURIComponent('tuto ' + q) + '" target="_blank" rel="noopener">Vidéo du mouvement</a></div></details>';
-    return h;
+    var q = QUERY[ex] || EX[ex].name;
+    return '<div class="links"><a href="https://www.google.com/search?tbm=isch&q=' + encodeURIComponent(q) + '" target="_blank" rel="noopener">Plus de photos</a><a href="https://www.youtube.com/results?search_query=' + encodeURIComponent('tuto ' + q) + '" target="_blank" rel="noopener">Vidéo du mouvement</a></div>';
   }
   function it(ex, sets, reps, rest, restS) { return { ex: ex, sets: sets, reps: reps, rest: rest, restS: restS }; }
   var PROG = [
@@ -284,7 +287,7 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
         sets += '<div class="set' + (st.c ? ' on' : '') + '" data-i="' + i + '" data-s="' + s + '"><button type="button" aria-pressed="' + !!st.c + '" aria-label="Série ' + (s + 1) + (st.c ? ' faite' : ' à faire') + '">' + CHECK + '</button>' +
           '<label>S' + (s + 1) + ' <input type="number" inputmode="numeric" min="0" max="99" value="' + (st.r || '') + '" placeholder="' + mr + '" aria-label="Répétitions série ' + (s + 1) + '"> reps</label></div>';
       }
-      var h = '<article class="card ex' + (all ? ' done' : '') + '" data-ex="' + x.ex + '"><h3><span class="n">' + (i + 1) + '</span>' + esc(e.name) + '</h3>' +
+      var h = '<article class="card ex' + (all ? ' done' : '') + '" data-ex="' + x.ex + '"><h3><span class="n">' + (i + 1) + '</span>' + esc(e.name) + '</h3>' + picsHtml(x.ex) +
         '<p class="meta"><b>' + x.sets + ' × ' + x.reps + '</b> · repos ' + x.rest + '</p>' + (x.bonus ? '<span class="bonus">' + esc(x.bonus) + '</span>' : '');
       if (e.step) {
         h += '<div class="load"><button type="button" class="step" data-l="-" aria-label="Baisser la charge">−</button><div class="kg"><input type="text" inputmode="decimal" autocomplete="off" value="' + (L == null ? '' : String(L).replace('.', ',')) + '" placeholder="–" aria-label="Charge : ' + esc(e.name) + '"><span>' + e.unit + '</span></div><button type="button" class="step" data-l="+" aria-label="Monter la charge">+</button>' +
