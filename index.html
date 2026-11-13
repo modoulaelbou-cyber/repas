@@ -203,6 +203,10 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
 .mylist li span { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
 /* Sauvegarde */
 .addbtn { min-height: 40px; padding: 6px 14px; font-size: 15px; }
+.whenbar { margin: 18px 0 0; }
+.whenbar .seg2 button { min-height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.15; }
+.whenbar .seg2 button small { font-size: 12px; font-weight: 500; opacity: .75; }
+.ready { margin: 10px 0 0; padding: 10px 12px; border-radius: 8px; border-left: 4px solid var(--ok); background: var(--surface); display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; font-size: 14px; }
 .backup { margin-top: 20px; display: flex; flex-direction: column; gap: 12px; }
 /* Navigation */
 .nav { position: sticky; top: 0; z-index: 6; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 16px 0 0; padding: 4px; background: var(--surface2); border-radius: 10px; }
@@ -290,6 +294,7 @@ body:not([data-view="repas"]) .bar { display: none; }
   </nav>
 
   <div id="v-repas">
+  <div class="whenbar" id="when"></div>
 
   <section class="card goals" aria-label="Objectifs de la journée">
     <div class="dayline" id="dayline"></div>
@@ -702,6 +707,7 @@ body:not([data-view="repas"]) .bar { display: none; }
         });
         if (s.meal === 'am' || s.meal === 'pm') state.meal = s.meal;
         if (s.day && typeof s.day === 'object') state.day = s.day;
+        if (s.tom && typeof s.tom === 'object') state.tomSaved = s.tom;
       }
     }
   } catch (e) {}
@@ -710,6 +716,18 @@ body:not([data-view="repas"]) .bar { display: none; }
   state.todayKey = DKEYS[new Date().getDay()];
   if (!state.day || state.day.date !== state.saveDate) state.day = { date: state.saveDate, acts: null, work: null, water: 0 };
   state.ndArm = false; state.qOpen = false; state.view = 'repas'; state.fibGoal = 30;
+  /* Repas d'aujourd'hui (T) et repas préparés pour demain (N) ; state.am / state.pm pointent sur le jour affiché */
+  function cleanMeal(m) { return { sel: m && Array.isArray(m.sel) ? m.sel.filter(function (id) { return BY[id]; }) : [], pins: (m && m.pins) || {}, force: (m && m.force) || {} }; }
+  function addDays(iso, n) { var d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); var z = function (x) { return (x < 10 ? '0' : '') + x; }; return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()); }
+  var TS = state.tomSaved || {};
+  state.T = { am: state.am, pm: state.pm };
+  state.N = { am: cleanMeal(TS.am), pm: cleanMeal(TS.pm), forDate: TS.forDate || '', acts: Array.isArray(TS.acts) ? TS.acts : null, work: typeof TS.work === 'boolean' ? TS.work : null };
+  state.when = 'today'; state.tomKey = DKEYS[(new Date().getDay() + 1) % 7]; state.tomDate = addDays(state.saveDate, 1);
+  function nCount(C) { return C.am.sel.length + C.pm.sel.length; }
+  /* Les repas préparés hier pour aujourd'hui (ou avant) sont prêts à être chargés */
+  function readyToLoad() { return nCount(state.N) > 0 && state.N.forDate && state.N.forDate <= state.saveDate; }
+  function syncBack() { var C = state.when === 'tom' ? state.N : state.T; C.am = state.am; C.pm = state.pm; }
+  function bindWhen(w) { syncBack(); state.when = w; var C = w === 'tom' ? state.N : state.T; state.am = C.am; state.pm = C.pm; state.ndArm = false; state.saveOpen = false; }
   state.editId = ''; state.saveOpen = false; state.mealName = ''; state.mflash = ''; state.manage = false; state.mArm = '';
 
   /* Repas enregistrés + aliments récents */
@@ -721,7 +739,10 @@ body:not([data-view="repas"]) .bar { display: none; }
     RECENT = RECENT.slice(0, 16); lsSet(RKEY, RECENT);
   }
   function save() {
-    try { localStorage.setItem(KEY, JSON.stringify({ tgt: state.tgt, meal: state.meal, am: state.am, pm: state.pm, day: state.day })); } catch (e) {}
+    syncBack();
+    if (state.when === 'tom' && nCount(state.N)) state.N.forDate = state.tomDate;
+    var tom = { am: state.N.am, pm: state.N.pm, forDate: state.N.forDate, acts: state.N.acts, work: state.N.work };
+    try { localStorage.setItem(KEY, JSON.stringify({ tgt: state.tgt, meal: state.meal, am: state.T.am, pm: state.T.pm, day: state.day, tom: tom })); } catch (e) {}
   }
 
   /* ---------- Profil, planning, suivi ---------- */
@@ -738,8 +759,10 @@ body:not([data-view="repas"]) .bar { display: none; }
     return Nutri.dayNum(state.saveDate) - last.n <= 10 ? Math.round(last.avg * 10) / 10 : 0;
   }
   function currentRes() { return Nutri.compute(PROF, { weight: bodyWeight() }); }
-  function todayActs() { return state.day.acts || ((PROF.plan[state.todayKey] || {}).a || []).slice(); }
-  function todayWork() { return state.day.work != null ? state.day.work : !!(PROF.plan[state.todayKey] || {}).w; }
+  function dObj() { return state.when === 'tom' ? state.N : state.day; }
+  function dKey() { return state.when === 'tom' ? state.tomKey : state.todayKey; }
+  function todayActs() { return dObj().acts || ((PROF.plan[dKey()] || {}).a || []).slice(); }
+  function todayWork() { return dObj().work != null ? dObj().work : !!(PROF.plan[dKey()] || {}).w; }
   function actsLabel(a, w) { var t = a.map(function (x) { return Nutri.ACT[x].label; }); if (!t.length) t.push('Repos'); if (w) t.push('Travail'); return t.join(' + '); }
   /* Met à jour les objectifs du jour : calcul auto si le profil est complet et que l'utilisateur n'a pas personnalisé. */
   function syncTargets() {
@@ -907,7 +930,7 @@ body:not([data-view="repas"]) .bar { display: none; }
     // Carte « journée »
     var tk = kcalOf({ p: g.p, c: g.c, f: g.f }), dt = { p: A.T.p + P.T.p, c: A.T.c + P.T.c, f: A.T.f + P.T.f };
     var eaten = kcalOf(dt), left = tk - eaten;
-    h += '<div class="card"><h2>Ma journée</h2>' +
+    h += '<div class="card"><h2>' + (state.when === 'tom' ? 'Demain (' + Nutri.DAY_LABEL[state.tomKey].toLowerCase() + ')' : 'Ma journée') + '</h2>' +
       '<div class="readout"><div class="kcal">' + nf(eaten) + '<small>/ ' + nf(tk) + ' kcal</small></div>' +
       '<p class="need">' + (left >= 0 ? 'Reste <b>' + nf(left) + ' kcal</b>' : 'Dépasse de <b>' + nf(-left) + ' kcal</b>') + '</p></div>' +
       dayGauge('p', A.T.p, P.T.p, g.p) + dayGauge('c', A.T.c, P.T.c, g.c) + dayGauge('f', A.T.f, P.T.f, g.f) + dayGauge('fib', A.T.fib, P.T.fib, state.fibGoal) +
@@ -941,17 +964,31 @@ body:not([data-view="repas"]) .bar { display: none; }
 
   function renderBar(A, P) {
     var S = state.meal === 'am' ? A : P, n = state[state.meal].sel.length, b = $('#bar');
-    b.innerHTML = '<div class="bs"><b>P ' + nf(S.T.p) + ' · G ' + nf(S.T.c) + ' · L ' + nf(S.T.f) + '</b><span>' + (state.meal === 'am' ? 'Matin' : 'Soir') + ' · ' + nf(S.T.kcal) + ' kcal · ' + n + ' aliment' + (n > 1 ? 's' : '') + '</span></div>' +
+    b.innerHTML = '<div class="bs"><b>P ' + nf(S.T.p) + ' · G ' + nf(S.T.c) + ' · L ' + nf(S.T.f) + '</b><span>' + (state.when === 'tom' ? 'Demain · ' : '') + (state.meal === 'am' ? 'Matin' : 'Soir') + ' · ' + nf(S.T.kcal) + ' kcal · ' + n + ' aliment' + (n > 1 ? 's' : '') + '</span></div>' +
       '<button type="button" id="goto">Voir les quantités</button>';
   }
 
+  function renderWhen() {
+    var n = nCount(state.when === 'tom' ? state.am && { am: state.am, pm: state.pm } : state.N), tl = Nutri.DAY_LABEL[state.tomKey].toLowerCase();
+    var h = '<div class="seg2" role="group" aria-label="Jour"><button type="button" data-w="today" aria-pressed="' + (state.when === 'today') + '">Aujourd\'hui<small>' + Nutri.DAY_LABEL[state.todayKey].toLowerCase() + '</small></button>' +
+      '<button type="button" data-w="tom" aria-pressed="' + (state.when === 'tom') + '">Demain<small>' + tl + (n ? ' · ' + n + ' aliment' + (n > 1 ? 's' : '') + ' prévu' + (n > 1 ? 's' : '') : '') + '</small></button></div>';
+    if (state.when === 'today' && readyToLoad()) h += '<div class="ready"><span>Tes repas préparés pour aujourd\'hui sont prêts.</span><button type="button" class="cta" data-w="load">Les charger</button></div>';
+    else if (state.when === 'tom') h += '<p class="tip" style="margin-top:8px">Prépare tes repas de demain. Demain, touche « Nouvelle journée » pour les charger.</p>';
+    $('#when').innerHTML = h;
+  }
   function renderSeg() {
     $('#seg').innerHTML = [['am', 'Repas du matin', '50 % de la journée'], ['pm', 'Repas du soir', 'le reste de la journée']].map(function (m) {
       var n = state[m[0]].sel.length;
       return '<button type="button" data-m="' + m[0] + '" aria-pressed="' + (state.meal === m[0]) + '">' + m[1] + '<small>' + m[2] + ' · ' + n + ' aliment' + (n > 1 ? 's' : '') + '</small></button>';
     }).join('');
-    var nd = state.am.sel.length + state.pm.sel.length;
-    $('#ndtop').innerHTML = nd ? '<button class="' + (state.ndArm ? 'cta' : 'mini') + '" type="button" data-act="newday">' + (state.ndArm ? 'Confirmer : vider matin et soir' : 'Nouvelle journée : vider matin et soir') + '</button>' + (state.ndArm ? '<button class="mini" type="button" data-act="newdayno">Annuler</button>' : '') : '';
+    var nd = state.am.sel.length + state.pm.sel.length, prep = nCount(state.N) > 0, lbl;
+    if (state.when === 'tom') lbl = state.ndArm ? 'Confirmer : vider les repas de demain' : 'Vider les repas de demain';
+    else lbl = state.ndArm ? (prep ? 'Confirmer : remplacer par les repas préparés' : 'Confirmer : vider matin et soir') : (prep ? 'Nouvelle journée : charger les repas préparés' : 'Nouvelle journée : vider matin et soir');
+    var show = state.when === 'tom' ? nd > 0 : (nd > 0 || prep);
+    var hh = show ? '<button class="' + (state.ndArm ? 'cta' : 'mini') + '" type="button" data-act="newday">' + lbl + '</button>' + (state.ndArm ? '<button class="mini" type="button" data-act="newdayno">Annuler</button>' : '') : '';
+    if (state.when === 'tom' && !nd && nCount(state.T)) hh += '<button class="mini" type="button" data-act="copytoday">Copier les repas d\'aujourd\'hui</button>';
+    $('#ndtop').innerHTML = hh;
+    renderWhen();
     $('#fhint').textContent = 'Coche tes sources : les quantités se calculent pour ce repas. Petit chiffre = g pour 100 g.';
   }
 
@@ -1073,9 +1110,9 @@ body:not([data-view="repas"]) .bar { display: none; }
     renderDay();
   }
   function renderDay() {
-    var acts = todayActs(), work = todayWork(), changed = state.day.acts != null || state.day.work != null;
-    var plan = PROF.plan[state.todayKey] || {};
-    var h = '<div class="lab"><span>Aujourd\'hui (' + Nutri.DAY_LABEL[state.todayKey].toLowerCase() + ') : <b>' + esc(actsLabel(acts, work)) + '</b></span>' +
+    var acts = todayActs(), work = todayWork(), changed = dObj().acts != null || dObj().work != null;
+    var plan = PROF.plan[dKey()] || {};
+    var h = '<div class="lab"><span>' + (state.when === 'tom' ? 'Demain' : 'Aujourd\'hui') + ' (' + Nutri.DAY_LABEL[dKey()].toLowerCase() + ') : <b>' + esc(actsLabel(acts, work)) + '</b></span>' +
       (changed ? '<button type="button" class="mini" data-dt="plan">Revenir au planning (' + esc(actsLabel(plan.a || [], !!plan.w)) + ')</button>' : '<span>selon ton planning</span>') + '</div><div class="tchips">';
     Nutri.ACT_ORDER.forEach(function (k) { h += '<button type="button" class="tchip" data-dt="' + k + '" aria-pressed="' + (acts.indexOf(k) > -1) + '">' + Nutri.ACT[k].label + '</button>'; });
     h += '<button type="button" class="tchip" data-dt="repos" aria-pressed="' + (!acts.length) + '">Repos</button>';
@@ -1419,10 +1456,11 @@ body:not([data-view="repas"]) .bar { display: none; }
   $('#dayline').addEventListener('click', function (e) {
     var b = e.target.closest('[data-dt]'); if (!b) return;
     var k = b.getAttribute('data-dt'), acts = todayActs();
-    if (k === 'plan') { state.day.acts = null; state.day.work = null; }
-    else if (k === 'repos') state.day.acts = [];
-    else if (k === 'travail') state.day.work = !todayWork();
-    else { var i = acts.indexOf(k); if (i > -1) acts.splice(i, 1); else acts.push(k); state.day.acts = acts; }
+    var DO = dObj();
+    if (k === 'plan') { DO.acts = null; DO.work = null; }
+    else if (k === 'repos') DO.acts = [];
+    else if (k === 'travail') DO.work = !todayWork();
+    else { var i = acts.indexOf(k); if (i > -1) acts.splice(i, 1); else acts.push(k); DO.acts = acts; }
     save(); syncTargets(); renderTargets(false); render();
   });
   $('#result').addEventListener('change', function (e) {
@@ -1444,10 +1482,17 @@ body:not([data-view="repas"]) .bar { display: none; }
     if (act === 'newday') {
       if (!state.ndArm) { state.ndArm = true; render(); return; }
       state.ndArm = false;
-      ['am', 'pm'].forEach(function (k) { state[k] = { sel: [], pins: {}, force: {} }; });
+      if (state.when === 'tom') {
+        state.am = { sel: [], pins: {}, force: {} }; state.pm = { sel: [], pins: {}, force: {} }; state.N.acts = null; state.N.work = null; state.N.forDate = '';
+        state.mflash = 'Repas de demain vidés.';
+        save(); syncTargets(); renderTargets(false); renderPresets(); renderFoods(); render(); return;
+      }
+      var prep = nCount(state.N) > 0;
+      if (prep) { state.T = { am: state.N.am, pm: state.N.pm }; state.day = { date: state.saveDate, acts: state.N.acts, work: state.N.work, water: 0 }; state.N = { am: cleanMeal(), pm: cleanMeal(), forDate: '', acts: null, work: null }; }
+      else { state.T = { am: cleanMeal(), pm: cleanMeal() }; state.day = { date: state.saveDate, acts: null, work: null, water: 0 }; }
+      state.am = state.T.am; state.pm = state.T.pm;
       state.meal = 'am'; state.saveOpen = false;
-      state.day = { date: state.saveDate, acts: null, work: null, water: 0 };
-      state.mflash = 'Nouvelle journée : les 2 repas sont remis à zéro.';
+      state.mflash = prep ? 'Nouvelle journée : tes repas préparés sont chargés.' : 'Nouvelle journée : les 2 repas sont remis à zéro.';
       save(); syncTargets(); renderTargets(false); renderPresets(); renderFoods(); render();
       window.scrollTo({ top: 0, behavior: 'smooth' }); return;
     }
@@ -1465,8 +1510,19 @@ body:not([data-view="repas"]) .bar { display: none; }
     if (act === 'std') { delete s.pins[id]; }
     save(); render();
   });
+  $('#when').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-w]'); if (!b) return; var w = b.getAttribute('data-w');
+    if (w === 'load') { state.ndArm = true; var nb = document.querySelector('#result [data-act="newday"]'); if (nb) nb.click(); return; }
+    if (w === state.when) return;
+    bindWhen(w); state.meal = 'am'; syncTargets(); save(); renderTargets(false); renderPresets(); renderFoods(); render();
+  });
   $('#ndtop').addEventListener('click', function (e) {
     var b = e.target.closest('[data-act]'); if (!b) return;
+    if (b.getAttribute('data-act') === 'copytoday') {
+      state.am = JSON.parse(JSON.stringify(state.T.am)); state.pm = JSON.parse(JSON.stringify(state.T.pm));
+      state.mflash = 'Repas d\'aujourd\'hui copiés pour demain : les quantités s\'adaptent aux objectifs de demain.';
+      save(); renderFoods(); render(); return;
+    }
     var rb = document.querySelector('#result [data-act="' + b.getAttribute('data-act') + '"]');
     if (rb) rb.click();
   });
