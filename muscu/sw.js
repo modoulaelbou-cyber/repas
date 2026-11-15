@@ -1,6 +1,6 @@
 /* Service worker de l'appli muscu : cache pour marcher sans connexion. */
-var CACHE = 'muscu-v6';
-var FILES = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png', 'img/chest-1.jpg', 'img/incline-1.jpg', 'img/incline-2.jpg', 'img/pulldown-1.jpg', 'img/pulldown-2.jpg', 'img/row-1.jpg', 'img/row-2.jpg', 'img/lateral-1.jpg', 'img/lateral-2.jpg', 'img/triceps-1.jpg', 'img/triceps-2.jpg', 'img/hammer-1.jpg', 'img/hammer-2.jpg', 'img/wrist-1.jpg', 'img/crunch-1.jpg', 'img/reardelt-1.jpg', 'img/goblet-1.jpg', 'img/legcurl-1.jpg', 'img/legcurl-2.jpg'];
+var CACHE = 'muscu-v7';
+var FILES = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png', 'img/chest-1.jpg', 'img/incline-1.jpg', 'img/incline-2.jpg', 'img/pulldown-1.jpg', 'img/pulldown-2.jpg', 'img/row-1.jpg', 'img/row-2.jpg', 'img/lateral-1.jpg', 'img/lateral-2.jpg', 'img/triceps-1.jpg', 'img/triceps-2.jpg', 'img/hammer-1.jpg', 'img/hammer-2.jpg', 'img/wrist-1.jpg', 'img/crunch-1.jpg', 'img/reardelt-1.jpg', 'img/goblet-1.jpg', 'img/legcurl-1.jpg', 'img/legcurl-2.jpg', 'img/curl-1.jpg', 'img/curl-2.jpg', 'img/revcrunch-1.jpg', 'img/revcrunch-2.jpg'];
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(FILES); }).then(function () { return self.skipWaiting(); }));
 });

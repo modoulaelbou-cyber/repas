@@ -20,3 +20,5 @@ Elles ont été redimensionnées pour l'appli.
 | legcurl-1, legcurl-2 | https://commons.wikimedia.org/wiki/File:Lying_leg_curl_machine_1.svg , https://commons.wikimedia.org/wiki/File:Lying_leg_curl_machine_2.svg |
 | legpress-1 | https://commons.wikimedia.org/wiki/File:Leg_Press_Machine.jpg |
 | legext-1 | https://commons.wikimedia.org/wiki/File:LegExtensionMachineExercise.JPG |
+| curl-1, curl-2 | https://commons.wikimedia.org/wiki/File:Standing-biceps-curl-1.gif , https://commons.wikimedia.org/wiki/File:Standing-biceps-curl-2.gif |
+| revcrunch-1, revcrunch-2 | https://commons.wikimedia.org/wiki/File:Leg-raises-2.png , https://commons.wikimedia.org/wiki/File:Leg-raises-1.png |

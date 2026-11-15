@@ -129,6 +129,9 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
 .skipped { padding: 18px 16px; text-align: center; color: var(--muted); }
 .bonus { display: inline-block; margin-top: 6px; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--warn); }
 /* Semaine dernière, note, échauffement */
+.musc { margin: 4px 0 0; font-size: 13px; color: var(--muted); line-height: 1.35; }
+.musc b { color: var(--accent); font-weight: 600; }
+.daymusc { margin: 2px 0 0; font-size: 14px; color: var(--ink); }
 .prev { margin: 8px 0 0; font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .prev b { color: var(--ink); font-weight: 600; }
 .note { margin: 8px 0 0; font-size: 14px; padding: 6px 10px; border-radius: 6px; background: var(--surface2); }
@@ -207,13 +210,35 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
   var PICS = {
     chest: ['chest-1'], chestlight: ['chest-1'], incline: ['incline-1', 'incline-2'], pulldown: ['pulldown-1', 'pulldown-2'],
     row: ['row-1', 'row-2'], lateral: ['lateral-1', 'lateral-2'], triceps: ['triceps-1', 'triceps-2'], hammer: ['hammer-1', 'hammer-2'],
-    wrist: ['wrist-1'], crunch: ['crunch-1'], reardelt: ['reardelt-1'], goblet: ['goblet-1'], legcurl: ['legcurl-1', 'legcurl-2']
+    wrist: ['wrist-1'], crunch: ['crunch-1'], curl: ['curl-1', 'curl-2'], revcrunch: ['revcrunch-1', 'revcrunch-2'], reardelt: ['reardelt-1'], goblet: ['goblet-1'], legcurl: ['legcurl-1', 'legcurl-2']
   };
+  /* Muscles travaillés : le premier est le muscle principal */
+  var MUSC = {
+    chest: ['Pectoraux', 'épaules (avant)', 'triceps'],
+    chestlight: ['Pectoraux', 'épaules (avant)', 'triceps'],
+    incline: ['Haut des pectoraux', 'épaules (avant)', 'triceps'],
+    pulldown: ['Grand dorsal (largeur du dos)', 'biceps', 'arrière des épaules'],
+    row: ['Milieu du dos (rhomboïdes, trapèzes)', 'grand dorsal', 'biceps'],
+    lateral: ['Épaules (côté)', 'trapèzes'],
+    triceps: ['Triceps'],
+    curl: ['Biceps', 'avant-bras'],
+    hammer: ['Biceps (brachial)', 'avant-bras'],
+    wrist: ['Avant-bras (fléchisseurs du poignet)'],
+    crunch: ['Abdominaux (grand droit)', 'obliques'],
+    reardelt: ['Arrière des épaules', 'haut du dos'],
+    goblet: ['Quadriceps', 'fessiers', 'gainage'],
+    legcurl: ['Ischio-jambiers (arrière des cuisses)', 'mollets'],
+    revcrunch: ['Bas des abdominaux', 'fléchisseurs de hanche']
+  };
+  /* Nom court pour le résumé du jour */
+  var MSHORT = { chest: 'pecs', chestlight: 'pecs', incline: 'haut des pecs', pulldown: 'dos', row: 'dos', lateral: 'épaules', triceps: 'triceps', curl: 'biceps', hammer: 'biceps', wrist: 'avant-bras', crunch: 'abdos', reardelt: 'arrière d\'épaules', goblet: 'jambes', legcurl: 'jambes', revcrunch: 'abdos' };
+  function muscHtml(ex) { var m = MUSC[ex]; return m ? '<p class="musc"><b>' + esc(m[0]) + '</b>' + (m.length > 1 ? ' · ' + m.slice(1).map(esc).join(' · ') : '') + '</p>' : ''; }
   var PICNOTE = {
     chest: 'Ta machine est sans doute droite : même principe, tu pousses les poignées devant toi.',
     chestlight: 'Ta machine est sans doute droite : même principe, tu pousses les poignées devant toi.',
     crunch: 'Ici assis ; toi tu fais pareil à genoux, la corde derrière la tête.',
-    goblet: 'Même descente ; pour le goblet, tiens un seul haltère contre la poitrine.'
+    goblet: 'Même descente ; pour le goblet, tiens un seul haltère contre la poitrine.',
+    revcrunch: 'Ici jambes tendues ; pour le reverse crunch, garde les genoux pliés et ramène-les vers la poitrine en décollant un peu les fesses.'
   };
   var QUERY = {
     chest: 'chest press machine assis', chestlight: 'chest press machine assis', incline: 'développé incliné haltères',
@@ -318,7 +343,8 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
       return '<button type="button" data-d="' + p.k + '" aria-pressed="' + (p.k === cur) + '" class="' + (!c.skip && c.d === c.t ? 'full' : '') + '">' + p.d.slice(0, 3) + '<small>' + (c.skip ? 'sautée' : c.d === c.t ? '✓' : c.d + '/' + c.t) + '</small></button>';
     }).join('');
     var P = PROG.filter(function (p) { return p.k === cur; })[0], c = dayCount(P);
-    $('#dayhead').innerHTML = '<h2>' + P.d + '</h2><p>' + esc(P.t) + (c.skip ? '' : ' · ' + c.d + ' / ' + c.t + ' séries') + '</p>' +
+    var dm = []; itemsFor(P).forEach(function (x) { var m = MSHORT[x.ex]; if (m && dm.indexOf(m) < 0) dm.push(m); });
+    $('#dayhead').innerHTML = '<h2>' + P.d + '</h2><p>' + esc(P.t) + (c.skip ? '' : ' · ' + c.d + ' / ' + c.t + ' séries') + '</p>' + (c.skip ? '' : '<p class="daymusc">Muscles du jour : ' + dm.map(esc).join(', ') + '</p>') +
       (P.opt ? '<div class="opt"><span>' + (S.skip[P.k] ? 'Séance sautée cette semaine. ' + (P.k === 'mar' ? 'Le mercredi a 3 séries de curl marteau en plus.' : 'Le vendredi, le chest press passe en normal.') : 'Séance optionnelle : seulement si tu es en pleine forme.') + '</span>' +
         '<button type="button" class="' + (S.skip[P.k] ? 'mini' : 'cta') + '" id="skipbtn">' + (S.skip[P.k] ? 'Je la fais finalement' : 'Je saute cette séance') + '</button></div>' : '');
     if (c.skip) { $('#list').innerHTML = '<div class="card skipped">Repos de muscu aujourd\'hui. Bonne séance de ' + (P.k === 'mar' ? 'MMA' : 'grappling') + ' !</div>'; $('#newweek').textContent = nwArm ? 'Confirmer : décocher toute la semaine' : 'Nouvelle semaine'; $('#newweek').className = nwArm ? 'cta' : 'mini'; return; }
@@ -333,7 +359,7 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
       }
       var key = P.k + '.' + i, th = thumbHtml(x.ex, key);
       var h = '<article class="card ex' + (all ? ' done' : '') + '" data-ex="' + x.ex + '"><div class="exhead' + (th ? '' : ' noimg') + '">' + th + '<div><h3><span class="n">' + (i + 1) + '</span>' + esc(e.name) + '</h3>' +
-        '<p class="meta"><b>' + x.sets + ' × ' + x.reps + '</b> · repos ' + x.rest + (x.mod ? ' · modifié' : '') + '</p>' + (x.bonus ? '<span class="bonus">' + esc(x.bonus) + '</span>' : '') + '</div></div>' + bigHtml(x.ex, key);
+        '<p class="meta"><b>' + x.sets + ' × ' + x.reps + '</b> · repos ' + x.rest + (x.mod ? ' · modifié' : '') + '</p>' + muscHtml(x.ex) + (x.bonus ? '<span class="bonus">' + esc(x.bonus) + '</span>' : '') + '</div></div>' + bigHtml(x.ex, key);
       if (S.notes[x.ex]) h += '<p class="note"><b>Note :</b> ' + esc(S.notes[x.ex]) + '</p>';
       if (pv) h += '<p class="prev">Semaine dernière : <b>' + (pv.load != null ? nf(pv.load) + ' ' + e.unit.replace(' / haltère', '') : 'sans charge') + '</b>' + (pv.r && pv.r.some(Boolean) ? ' · ' + pv.r.map(function (r) { return r || '–'; }).join(', ') + ' reps' : ' · ' + pv.c + '/' + pv.n + ' séries') + '</p>';
       if (i === firstLoaded(P) && L > 0) h += warmHtml(e, L);
