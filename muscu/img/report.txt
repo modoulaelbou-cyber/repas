@@ -1,0 +1,7 @@
+OK cand-curl-1 image/gif
+OK cand-curl-2 image/gif
+OK cand-curl-3 image/png
+OK cand-rev-1 image/png
+OK cand-rev-2 image/png
+OK cand-rev-3 image/jpeg
+OK cand-rev-4 image/png
