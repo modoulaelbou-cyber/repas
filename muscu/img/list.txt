@@ -1,0 +1,7 @@
+cand-curl-1|Standing-biceps-curl-1.gif
+cand-curl-2|Standing-biceps-curl-2.gif
+cand-curl-3|Bicep_curl_with_machine_1.svg
+cand-rev-1|Leg-raises-1.png
+cand-rev-2|Leg-raises-2.png
+cand-rev-3|Reverse_crunches_on_the_street_Sumo_Training_Arashio_Stable_Tokyo_Japan_(14841100741).jpg
+cand-rev-4|Leg-lift-1.png

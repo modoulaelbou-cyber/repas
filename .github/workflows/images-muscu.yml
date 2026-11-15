@@ -1,0 +1,29 @@
+# Tâche temporaire : télécharge des images libres (Wikimedia Commons) listées dans muscu/img/list.txt
+name: Images muscu
+on:
+  push:
+    paths: ['muscu/img/list.txt']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  images:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Télécharger
+        run: |
+          UA="RepasMuscuApp/1.0 (https://github.com/modoulaelbou-cyber/repas)"
+          mkdir -p muscu/img/raw; : > muscu/img/report.txt
+          while IFS='|' read -r name file; do
+            [ -z "$name" ] && continue
+            if curl -fsSL -A "$UA" "https://commons.wikimedia.org/wiki/Special:FilePath/${file}?width=480" -o "muscu/img/raw/$name"; then echo "OK $name $(file -b --mime-type muscu/img/raw/$name)" >> muscu/img/report.txt; else echo "FAIL $name $file" >> muscu/img/report.txt; fi
+            sleep 1
+          done < muscu/img/list.txt
+      - name: Enregistrer
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add muscu/img
+          git diff --cached --quiet || git commit -m "Images candidates muscu"
+          git push
