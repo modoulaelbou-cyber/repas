@@ -1,0 +1,32 @@
+hdb-1 | Alternating hammer curl with dumbbell 1.svg
+hdb-2 | Alternating hammer curl with dumbbell 2.svg
+hdb-3 | Bicep-hammer-curl-2.png
+hdb-4 | Bicep hammer curl with dumbbell 2.svg
+hdb-5 | Preacher hammer curl with dumbbell 2.svg
+hdb-6 | Bicep hammer curl with dumbbell 1.svg
+hdb-7 | Preacher hammer curl with dumbbell 1.svg
+hdb-8 | Cross body hammer curl with dumbbell 2.svg
+hdb2-1 | Bicep-hammer-curl-2.png
+hdb2-2 | Hammer-curls-with-rope-2.gif
+hdb2-3 | Hammer-curls-with-rope-1.gif
+hdb2-4 | Alternate-hammer-curl-2.png
+hdb2-5 | Alternate-hammer-curl-1.png
+hdb2-6 | Hammer curls with rope and cable 1.svg
+hdb2-7 | Hammer curls with rope and cable 2.svg
+hdb2-8 | Bicep-hammer-curl-1.png
+cdb-1 | Seated inner biceps curl with dumbbell 1.svg
+cdb-2 | Girl doing biceps curls with dumbbell closeup.jpg
+cdb-3 | Step up single leg balance with bicep curl using dumbbells 1.svg
+cdb-4 | Step up single leg balance with bicep curl using dumbbells 3.svg
+cdb-5 | Step up single leg balance with bicep curl using dumbbells 2.svg
+cdb-6 | Biceps curl with dumbbell 1.svg
+cdb-7 | Biceps curl with dumbbell 2.svg
+cdb-8 | Biceps curl squat with dumbbell 1.svg
+cdb2-1 | Dumbbell bicep curls.jpg
+cdb2-2 | Girl doing one arm dumbbell curl exercise.jpg
+cdb2-3 | Girl doing dumbbell curls on stability ball outside.jpg
+cdb2-4 | Bicep-curl-2.png
+cdb2-5 | Bicep-curl-1.png
+cdb2-6 | Alternating bicep curl with dumbbell 1.svg
+cdb2-7 | Alternate-bicep-curl-1.png
+cdb2-8 | Alternating bicep curl with dumbbell 2.svg
