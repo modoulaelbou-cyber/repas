@@ -1,0 +1,4 @@
+hdb|hammer curl dumbbell
+hdb2|hammer curls
+cdb|dumbbell biceps curl
+cdb2|dumbbell curl
