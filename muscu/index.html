@@ -199,6 +199,8 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
     triceps: { name: 'Extension triceps à la poulie', load: 15, step: 2.5, unit: 'kg' },
     curl: { name: 'Curl biceps à la poulie (barre)', load: 15, step: 2.5, unit: 'kg' },
     hammer: { name: 'Curl marteau à la corde', load: 15, step: 2.5, unit: 'kg' },
+    curldb: { name: 'Curl biceps haltères', load: null, step: 1, unit: 'kg / haltère', alt: 'curl' },
+    hammerdb: { name: 'Curl marteau haltères', load: null, step: 1, unit: 'kg / haltère', alt: 'hammer' },
     wrist: { name: 'Flexions des poignets haltères', load: null, step: 1, unit: 'kg / haltère' },
     crunch: { name: 'Crunch à la poulie à genoux', load: null, step: 2.5, unit: 'kg' },
     reardelt: { name: 'Oiseau haltères', load: 5, step: 1, unit: 'kg / haltère' },
@@ -206,11 +208,15 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
     legcurl: { name: 'Leg curl allongé', load: 23, step: 2.5, unit: 'kg' },
     revcrunch: { name: 'Reverse crunch', load: null, step: 0, unit: '' }
   };
+  /* Variante aux haltères : même place dans le programme, charge à part */
+  var ALT = { curl: 'curldb', hammer: 'hammerdb' };
+  function baseEx(ex) { return EX[ex].alt || ex; }
   /* Images libres de droits (Wikimedia Commons) et recherches pour voir la machine */
   var PICS = {
     chest: ['chest-1'], chestlight: ['chest-1'], incline: ['incline-1', 'incline-2'], pulldown: ['pulldown-1', 'pulldown-2'],
     row: ['row-1', 'row-2'], lateral: ['lateral-1', 'lateral-2'], triceps: ['triceps-1', 'triceps-2'], hammer: ['hammer-1', 'hammer-2'],
-    wrist: ['wrist-1'], crunch: ['crunch-1'], curl: ['curl-1', 'curl-2'], revcrunch: ['revcrunch-1', 'revcrunch-2'], reardelt: ['reardelt-1'], goblet: ['goblet-1'], legcurl: ['legcurl-1', 'legcurl-2']
+    wrist: ['wrist-1'], crunch: ['crunch-1'], curl: ['curl-1', 'curl-2'], revcrunch: ['revcrunch-1', 'revcrunch-2'], reardelt: ['reardelt-1'], goblet: ['goblet-1'], legcurl: ['legcurl-1', 'legcurl-2'],
+    curldb: ['curldb-1', 'curldb-2'], hammerdb: ['hammerdb-1', 'hammerdb-2']
   };
   /* Muscles travaillés : le premier est le muscle principal */
   var MUSC = {
@@ -223,6 +229,8 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
     triceps: ['Triceps'],
     curl: ['Biceps', 'avant-bras'],
     hammer: ['Biceps (brachial)', 'avant-bras'],
+    curldb: ['Biceps', 'avant-bras'],
+    hammerdb: ['Biceps (brachial)', 'avant-bras'],
     wrist: ['Avant-bras (fléchisseurs du poignet)'],
     crunch: ['Abdominaux (grand droit)', 'obliques'],
     reardelt: ['Arrière des épaules', 'haut du dos'],
@@ -231,7 +239,7 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
     revcrunch: ['Bas des abdominaux', 'fléchisseurs de hanche']
   };
   /* Nom court pour le résumé du jour */
-  var MSHORT = { chest: 'pecs', chestlight: 'pecs', incline: 'haut des pecs', pulldown: 'dos', row: 'dos', lateral: 'épaules', triceps: 'triceps', curl: 'biceps', hammer: 'biceps', wrist: 'avant-bras', crunch: 'abdos', reardelt: 'arrière d\'épaules', goblet: 'jambes', legcurl: 'jambes', revcrunch: 'abdos' };
+  var MSHORT = { chest: 'pecs', chestlight: 'pecs', incline: 'haut des pecs', pulldown: 'dos', row: 'dos', lateral: 'épaules', triceps: 'triceps', curl: 'biceps', hammer: 'biceps', curldb: 'biceps', hammerdb: 'biceps', wrist: 'avant-bras', crunch: 'abdos', reardelt: 'arrière d\'épaules', goblet: 'jambes', legcurl: 'jambes', revcrunch: 'abdos' };
   function muscHtml(ex) { var m = MUSC[ex]; return m ? '<p class="musc"><b>' + esc(m[0]) + '</b>' + (m.length > 1 ? ' · ' + m.slice(1).map(esc).join(' · ') : '') + '</p>' : ''; }
   var PICNOTE = {
     chest: 'Ta machine est sans doute droite : même principe, tu pousses les poignées devant toi.',
@@ -243,7 +251,7 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
   var QUERY = {
     chest: 'chest press machine assis', chestlight: 'chest press machine assis', incline: 'développé incliné haltères',
     pulldown: 'tirage vertical poulie haute', row: 'rowing poulie basse assis', lateral: 'élévations latérales haltères',
-    triceps: 'extension triceps poulie haute', curl: 'curl biceps poulie basse barre', hammer: 'curl marteau corde poulie',
+    triceps: 'extension triceps poulie haute', curl: 'curl biceps poulie basse barre', hammer: 'curl marteau corde poulie', curldb: 'curl biceps haltères debout', hammerdb: 'curl marteau haltères',
     wrist: 'flexion des poignets haltères assis', crunch: 'crunch poulie haute à genoux', reardelt: 'oiseau haltères buste penché',
     goblet: 'goblet squat haltère', legcurl: 'leg curl allongé machine', revcrunch: 'reverse crunch au sol'
   };
@@ -291,7 +299,7 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
     S = { loads: {}, done: {}, hist: {}, week: today() };
     Object.keys(START_DONE).forEach(function (d) { START_DONE[d].forEach(function (n, i) { for (var s = 0; s < n; s++) S.done[d + '.' + i + '.' + s] = { c: true }; }); });
   }
-  function norm(S) { S.loads = S.loads || {}; S.done = S.done || {}; S.hist = S.hist || {}; S.skip = S.skip || {}; S.prev = S.prev || {}; S.mods = S.mods || {}; S.notes = S.notes || {}; S.weeks = S.weeks || []; S.opt = S.opt || { sound: true, wake: true }; return S; }
+  function norm(S) { S.loads = S.loads || {}; S.done = S.done || {}; S.hist = S.hist || {}; S.skip = S.skip || {}; S.prev = S.prev || {}; S.mods = S.mods || {}; S.notes = S.notes || {}; S.weeks = S.weeks || []; S.opt = S.opt || { sound: true, wake: true }; S.alt = S.alt || {}; return S; }
   norm(S);
   function fmtRest(sec) { return sec < 90 ? sec + ' s' : sec % 60 ? Math.floor(sec / 60) + ' min ' + (sec % 60) : (sec / 60) + ' min'; }
   /* Exercices du jour, avec compensation si une séance optionnelle est sautée */
@@ -302,7 +310,7 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
     });
     if (p.k === 'mer' && S.skip.mar) L.push({ ex: 'hammer', sets: 3, reps: '10–15', rest: '90 s', restS: 90, bonus: 'Remplace la séance du mardi' });
     if (p.k === 'ven' && S.skip.jeu) L = L.map(function (x) { return x.ex === 'chestlight' ? { ex: 'chest', sets: 3, reps: '8–12', rest: '2 min', restS: 120, bonus: 'Normal au lieu de léger : remplace le jeudi' } : x; });
-    return L;
+    return L.map(function (x) { if (!ALT[x.ex] || !S.alt[x.ex]) return x; var y = {}; for (var k in x) y[k] = x[k]; y.ex = ALT[x.ex]; return y; });
   }
   var DAYKEYS = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'];
   var cur = (function () { var k = DAYKEYS[new Date().getDay()]; return PROG.some(function (p) { return p.k === k; }) ? k : 'lun'; })();
@@ -372,7 +380,7 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
       var hs = (S.hist[e.of || x.ex] || []).slice(-4);
       if (hs.length > 1) h += '<p class="histo">Évolution : ' + hs.map(function (y) { return nf(y.v); }).join(' → ') + ' ' + e.unit.replace(' / haltère', '') + '</p>';
       h += EDIT === key ? editHtml(P, i, x) : '';
-      return h + '<div class="links" style="margin-top:12px">' + howHtml(x.ex).replace('<div class="links">', '').replace(/<\/div>$/, '') + (EDIT === key ? '' : '<button type="button" class="mini" data-edit="' + key + '">Modifier</button>') + '</div></article>';
+      return h + '<div class="links" style="margin-top:12px">' + howHtml(x.ex).replace('<div class="links">', '').replace(/<\/div>$/, '') + (ALT[baseEx(x.ex)] ? '<button type="button" class="mini" data-alt="1">' + (EX[x.ex].alt ? 'Faire à la poulie' : 'Faire aux haltères') + '</button>' : '') + (EDIT === key ? '' : '<button type="button" class="mini" data-edit="' + key + '">Modifier</button>') + '</div></article>';
     }).join('');
     $('#newweek').textContent = nwArm ? 'Confirmer : décocher toute la semaine' : 'Nouvelle semaine';
     $('#newweek').className = nwArm ? 'cta' : 'mini';
@@ -397,7 +405,7 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
   }
   function renderProgress() {
     var seen = {}, rows = [];
-    PROG.forEach(function (p) { p.items.forEach(function (x) { var k = EX[x.ex].of || x.ex; if (seen[k] || !EX[k].step) return; seen[k] = 1; var h = S.hist[k] || [], now = load(k); if (now == null) return; var start = h.length ? h[0].v : now; rows.push({ n: EX[k].name, u: EX[k].unit.replace(' / haltère', ''), s: start, c: now }); }); });
+    PROG.forEach(function (p) { p.items.concat(itemsFor(p)).forEach(function (x) { var k = EX[x.ex].of || x.ex; if (seen[k] || !EX[k].step) return; seen[k] = 1; var h = S.hist[k] || [], now = load(k); if (now == null) return; var start = h.length ? h[0].v : now; rows.push({ n: EX[k].name, u: EX[k].unit.replace(' / haltère', ''), s: start, c: now }); }); });
     var h = '<h2>Progrès</h2><ul class="plist">' + rows.map(function (r) {
       var d = Math.round((r.c - r.s) * 100) / 100;
       return '<li>' + esc(r.n) + '<span>' + (d ? nf(r.s) + ' → ' : '') + '<b>' + nf(r.c) + ' ' + r.u + '</b>' + (d > 0 ? ' <span class="up">+' + nf(d) + '</span>' : '') + '</span></li>';
@@ -466,6 +474,7 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
       }
       return;
     }
+    if (e.target.closest('[data-alt]')) { var bx = baseEx(ex); S.alt[bx] = !S.alt[bx]; if (!S.alt[bx]) delete S.alt[bx]; save(); render(); return; }
     var tb = e.target.closest('[data-big]');
     if (tb) { var bk = tb.getAttribute('data-big'); OPEN[bk] = !OPEN[bk]; render(); return; }
     var st = e.target.closest('[data-l]');
