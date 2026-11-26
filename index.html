@@ -148,6 +148,12 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
 .status { display: grid; gap: 6px; font-size: 14px; }
 .status p { margin: 0; padding-left: 12px; border-left: 3px solid var(--line); }
 .status .ok { border-color: var(--ok); } .status .warn { border-color: var(--cc); } .status .bad { border-color: var(--bad); }
+.sug { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; align-items: stretch; }
+.sugl { flex-basis: 100%; font-size: 12.5px; color: var(--muted); }
+.sug button { text-align: left; min-height: 40px; padding: 4px 10px; border: 1px solid var(--cc); border-radius: 6px; background: transparent; color: var(--ink); font: inherit; font-size: 13px; cursor: pointer; }
+.sug button b { display: block; font-weight: 700; }
+.sug button small { display: block; font-size: 12px; color: var(--muted); }
+.sug button:hover { background: var(--surface2); }
 .foot { margin: 0; font-size: 12.5px; color: var(--muted); }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .cta { min-height: 44px; padding: 8px 16px; border: 0; border-radius: 8px; background: var(--ink); color: var(--bg); font-weight: 600; }
@@ -855,6 +861,79 @@ body:not([data-view="repas"]) .bar { display: none; }
     };
   }
 
+  /* ---------- Suggestions pour compléter un manque ----------
+     Règle : on propose d'abord des aliments prêts à manger (aucune cuisson en plus), puis des aliments qui cuisent
+     en même temps qu'un aliment de la même famille déjà dans le repas (même casserole, même poêle, même plaque). */
+  function setOf(a) { var o = {}; a.forEach(function (x) { o[x] = 1; }); return o; }
+  var HOTC = setOf(['riz', 'rizcomplet', 'pates', 'patescompletes', 'patate', 'patatedouce', 'semoule', 'boulgour', 'quinoa', 'lentilles', 'frites', 'gnocchis']);
+  var READYP = setOf(['skyr', 'fb0', 'fb3', 'whey', 'cottage', 'yaourtgrec', 'thon', 'jambon', 'surimi', 'skyrboire', 'sardines', 'tofu']);
+  var GRP = {
+    four: ['patate', 'patatedouce', 'frites', 'poulet', 'cuisse', 'dinde', 'saumon', 'cabillaud', 'colin', 'truite', 'porc', 'nuggets', 'cordon', 'agneau'],
+    casserole: ['riz', 'quinoa', 'boulgour', 'semoule'],
+    pates: ['pates', 'patescompletes', 'gnocchis'],
+    poele: ['poulet', 'cuisse', 'dinde', 'dindehachee', 'steak', 'boeuf5', 'boeuf15', 'porc', 'veau', 'saumon', 'truite', 'cabillaud', 'colin', 'crevettes', 'oeuf', 'blanc', 'kebab', 'tempeh', 'seitan']
+  };
+  var GLAB = { four: 'même plaque au four', casserole: 'même casserole', pates: 'même casserole', poele: 'même poêle' };
+  function sameCook(a, b) { for (var g in GRP) if (GRP[g].indexOf(a) > -1 && GRP[g].indexOf(b) > -1) return g; return ''; }
+  var SUGL = {
+    p: { ready: ['skyr', 'fb0', 'whey', 'cottage', 'yaourtgrec', 'thon', 'jambon', 'surimi', 'fb3', 'skyrboire', 'sardines', 'tofu'],
+      cook: ['poulet', 'oeuf', 'dinde', 'boeuf5', 'saumon', 'cabillaud', 'steak', 'porc', 'cuisse', 'dindehachee', 'veau', 'crevettes', 'blanc'] },
+    c: { ready: ['complet', 'baguette', 'banane', 'dattes', 'pomme', 'pita', 'wrap', 'poischiches', 'mais', 'compote', 'mangue', 'raisin', 'kiwi', 'orange', 'fruitsrouges', 'haricotsrouges', 'bagel'],
+      sweet: ['muesli', 'flocons', 'cornflakes', 'miel', 'galetteriz', 'confiture', 'mie', 'biscottes'],
+      cook: ['riz', 'patate', 'pates', 'semoule', 'boulgour', 'patatedouce', 'quinoa', 'gnocchis', 'rizcomplet', 'patescompletes', 'lentilles', 'frites'] },
+    f: { ready: ['amandes', 'bpc', 'noix', 'avocat', 'cacahuetes', 'noisettes', 'olives'], hot: ['huile', 'emmental'], cook: [] }
+  };
+  /* Grammes à ajouter pour couvrir `need` g de la macro k (arrondis en pièces ou par 5 g, dans la limite du maximum par repas) */
+  function sugQty(it, need, k) {
+    var per = it[k] / 100; if (per <= 0) return 0;
+    var g = Math.min(need / per, cap(it));
+    if (it.u) { var n = Math.max(1, Math.round(g / it.u[2])); return Math.min(n * it.u[2], cap(it)); }
+    return Math.min(Math.max(5, Math.round(g / 5) * 5), cap(it));
+  }
+  function suggest(k, S, RT, m) {
+    var sec = SECOF[k], have = S.T, need = RT[k] - have[k];
+    if (need <= TOL[k]) return [];
+    var rows = S.rows, ids = rows.map(function (r) { return r.it.id; });
+    var hotRows = rows.filter(function (r) { var it = r.it; return HOTC[it.id] || (it.sec === 'p' && (it.sub === V || it.sub === PO || it.id === 'oeuf' || it.id === 'blanc') && !READYP[it.id]); });
+    var hot = hotRows.length > 0, savory = hot || rows.some(function (r) { return r.it.sub === V || r.it.sub === PO; });
+    var inSec = rows.filter(function (r) { return r.it.sec === sec; }), other = state[m === 'am' ? 'pm' : 'am'].sel, L = SUGL[k];
+    var cands = [];
+    function push(id, tier, tag) {
+      var it = BY[id]; if (!it || ids.indexOf(id) > -1) return;
+      for (var i = 0; i < cands.length; i++) if (cands[i].it.id === id) return;
+      cands.push({ it: it, tier: tier, tag: tag || '', ord: cands.length });
+    }
+    var ready = k === 'f' ? (hot ? ['huile', 'amandes', 'bpc', 'avocat', 'noix', 'cacahuetes', 'noisettes', 'emmental', 'olives'] : L.ready) : k === 'c' && !savory ? L.ready.concat(L.sweet) : L.ready;
+    ready.forEach(function (id) { push(id, 0); });
+    hotRows.forEach(function (r) {
+      if (r.it.sec !== sec) return;
+      L.cook.forEach(function (id) { var g = sameCook(r.it.id, id); if (g && id !== r.it.id) push(id, 1, GLAB[g]); });
+    });
+    if (!inSec.length && L.cook.length) L.cook.forEach(function (id) { push(id, 1, ''); });
+    D.forEach(function (it) { if (it.mine && it.sec === sec && it.sec !== 'e' && (RECENT.indexOf(it.id) > -1 || other.indexOf(it.id) > -1)) push(it.id, 0); });
+    var room = {}; ['p', 'c', 'f'].forEach(function (j) { room[j] = Math.max(RT[j] - have[j], 0) + TOL[j]; });
+    var res = [];
+    cands.forEach(function (c) {
+      var it = c.it, g = sugQty(it, need, k); if (g <= 0) return;
+      var add = { p: it.p * g / 100, c: it.c * g / 100, f: it.f * g / 100 };
+      if (add[k] < Math.max(TOL[k], need * 0.25)) return;
+      var pen = Math.max(0, need - TOL[k] - add[k]) + Math.max(0, add[k] - need - TOL[k]);
+      ['p', 'c', 'f'].forEach(function (j) { if (j !== k) pen += Math.max(0, add[j] - room[j]); });
+      var ro = other.indexOf(it.id), ri = RECENT.indexOf(it.id);
+      res.push({ it: it, g: g, add: add[k], pen: pen, tier: c.tier, tag: c.tag, ord: c.ord, rank: ro > -1 ? 0 : ri > -1 ? 1 + ri / 100 : 2 });
+    });
+    res.sort(function (a, b) { return Math.round(a.pen / 5) - Math.round(b.pen / 5) || a.tier - b.tier || a.rank - b.rank || a.ord - b.ord; });
+    var out = [], subs = {};
+    res.forEach(function (r) { if (out.length >= 3 || subs[r.it.sub]) return; subs[r.it.sub] = 1; out.push(r); });
+    return out;
+  }
+  function sugHtml(list, k) {
+    return '<span class="sug"><span class="sugl">Pour compléter :</span>' + list.map(function (r) {
+      var it = r.it, q = it.u ? (function (n) { return nf(n, 1) + ' ' + (n > 1 ? it.u[1] : it.u[0]); })(r.g / it.u[2]) : nf(r.g) + ' g';
+      return '<button type="button" data-sug="' + it.id + '" data-g="' + Math.round(r.g * 10) / 10 + '"><b>' + esc(it.name) + ' · ' + esc(q) + '</b><small>+' + nf(r.add) + ' g de ' + NAMES[k] + (r.tag ? ' · ' + r.tag : '') + '</small></button>';
+    }).join('') + '</span>';
+  }
+
   /* ---------- Rendu : résultat ---------- */
   function qtyDisplay(r) {
     var it = r.it;
@@ -907,7 +986,7 @@ body:not([data-view="repas"]) .bar { display: none; }
       '<span class="' + (over ? 'ov' : '') + '">' + nf(have) + ' / ' + nf(t) + ' g</span></div>' +
       '<div class="track"><i class="sg" style="width:' + pct + '%;background:' + (over ? 'var(--bad)' : COL[k]) + '"></i></div></div>';
   }
-  function pmStatus(P, R) {
+  function pmStatus(P, R, m) {
     var out = [];
     ['p', 'c', 'f'].forEach(function (k) {
       var have = P.T[k], diff = have - R[k], sec = SECOF[k], nm = NAMES[k];
@@ -915,9 +994,12 @@ body:not([data-view="repas"]) .bar { display: none; }
       if (R[k] <= 0.5 && have <= TOL[k]) out.push(['ok', 'Objectif du repas déjà couvert pour les ' + nm + '.']);
       else if (Math.abs(diff) <= TOL[k]) out.push(['ok', 'Objectif atteint pour les ' + nm + ' (' + nf(have) + ' / ' + nf(R[k]) + ' g).']);
       else if (diff < 0) {
-        if (!P.auto[sec].length) out.push(['warn', 'Il manque ' + nf(-diff) + ' g de ' + nm + '. Ajoute une source (' + EX[k] + ') ou passe un aliment fixe en « Recalculer ».']);
+        var sg = suggest(k, P, R, m);
+        if (sg.length) out.push(['warn', 'Il manque ' + nf(-diff) + ' g de ' + nm + (P.capped[sec] ? ' (maximum atteint avec ces aliments)' : '') + '.']);
+        else if (!P.auto[sec].length) out.push(['warn', 'Il manque ' + nf(-diff) + ' g de ' + nm + '. Ajoute une source (' + EX[k] + ') ou passe un aliment fixe en « Recalculer ».']);
         else if (P.capped[sec]) out.push(['warn', 'Maximum atteint avec ces aliments : il manque ' + nf(-diff) + ' g de ' + nm + '. Ajoute une autre source (' + EX[k] + ').']);
         else out.push(['warn', 'Il manque ' + nf(-diff) + ' g de ' + nm + ' (portions arrondies).']);
+        if (sg.length) out[out.length - 1].push(sugHtml(sg, k));
       } else {
         out.push(['bad', 'Dépasse de ' + nf(diff) + ' g de ' + nm + ' : retire un aliment ou baisse une quantité fixée.' + (k === 'f' ? ' La viande, le fromage ou les sauces apportent déjà du gras.' : '')]);
       }
@@ -948,7 +1030,7 @@ body:not([data-view="repas"]) .bar { display: none; }
       h += '<p class="emptyres">Coche tes sources (une viande ou du skyr, un féculent, une huile…) : les quantités apparaissent ici.</p>';
     } else {
       h += readout(S.T) + mealGauge('p', S.T.p, RT.p) + mealGauge('c', S.T.c, RT.c) + mealGauge('f', S.T.f, RT.f) + rowsHtml(S, m);
-      h += '<div class="status">' + pmStatus(S, RT).map(function (x) { return '<p class="' + x[0] + '">' + x[1] + '</p>'; }).join('') + '</div>';
+      h += '<div class="status">' + pmStatus(S, RT, m).map(function (x) { return '<p class="' + x[0] + '">' + x[1] + (x[2] || '') + '</p>'; }).join('') + '</div>';
       h += '<p class="foot">Poids crus sauf mention contraire : tu peux aussi taper le poids cuit, il est converti en cru. Moyennes : l\'étiquette prévaut (viande hachée, pains burger, sauces, produits laitiers). Modifie une quantité pour la fixer, les autres se recalculent.</p>';
       if (state.saveOpen) {
         h += '<div class="savemeal"><input id="mname" type="text" maxlength="40" placeholder="Nom du repas" value="' + esc(state.mealName) + '" aria-label="Nom du repas">' +
@@ -1502,6 +1584,14 @@ body:not([data-view="repas"]) .bar { display: none; }
     if (act === 'mealno') { state.saveOpen = false; render(); return; }
     if (act === 'gopm') { state.meal = 'pm'; save(); renderPresets(); renderFoods(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
     if (act === 'clear') { s.sel = []; s.pins = {}; s.force = {}; save(); renderFoods(); render(); return; }
+    var sgid = b.getAttribute('data-sug');
+    if (sgid && BY[sgid]) {
+      var it0 = BY[sgid], mm = state.meal;
+      if (s.sel.indexOf(sgid) < 0) { s.sel.push(sgid); touchRecent([sgid]); }
+      var autoInSec = s.sel.some(function (x) { var o = BY[x]; return o && x !== sgid && o.sec === it0.sec && isAuto(mm, o); });
+      if (it0.fix || autoInSec) s.pins[sgid] = +b.getAttribute('data-g'); else delete s.pins[sgid];
+      refreshChips(); save(); render(); return;
+    }
     var row = b.closest('.row'); if (!row) return;
     var id = row.getAttribute('data-id');
     if (act === 'edit') { openEdit(id); return; }
