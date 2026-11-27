@@ -1056,7 +1056,7 @@ body:not([data-view="repas"]) .bar { display: none; }
       el.innerHTML = h + '</div>'; return;
     }
     var S = m === 'am' ? A : P, RT = m === 'am' ? H : R;
-    var need = (m === 'am' ? 'Objectif du matin (la moitié de la journée)' : (state.am.sel.length ? 'Reste à manger ce soir' : 'Objectif du soir (la moitié de la journée)') + (state.sn.sel.length ? ', à côté déduit' : '')) +
+    var need = (m === 'am' ? 'Objectif du matin (la moitié de la journée' + (state.sn.sel.length ? ', à côté déduit)' : ')') : (state.am.sel.length ? 'Reste à manger ce soir' : 'Objectif du soir (la moitié de la journée)') + (state.sn.sel.length ? ', à côté déduit' : '')) +
       ' : <b>' + nf(RT.p) + ' g</b> de protéines · <b>' + nf(RT.c) + ' g</b> de glucides · <b>' + nf(RT.f) + ' g</b> de lipides (≈ ' + nf(kcalOf(RT)) + ' kcal)';
     h += '<div class="card" id="mealcard"><h2>' + (m === 'am' ? 'Repas du matin' : 'Repas du soir') + '</h2>';
     h += '<p class="need">' + need + '</p>';
@@ -1109,8 +1109,10 @@ body:not([data-view="repas"]) .bar { display: none; }
   }
 
   function render() {
-    var g = state.tgt, H = { p: g.p / 2, c: g.c / 2, f: g.f / 2, ov: { p: 0, c: 0, f: 0 } };
-    var A = solve('am', H), Sn = solve('sn', null), base = state.am.sel.length ? A.T : H;
+    var g = state.tgt, Sn = solve('sn', null);
+    /* ce qui est mangé à côté est retiré de la journée, puis le reste est partagé en deux */
+    var H = { p: Math.max(g.p - Sn.T.p, 0) / 2, c: Math.max(g.c - Sn.T.c, 0) / 2, f: Math.max(g.f - Sn.T.f, 0) / 2, ov: { p: 0, c: 0, f: 0 } };
+    var A = solve('am', H), base = state.am.sel.length ? A.T : H;
     var R = remaining({ p: base.p + Sn.T.p, c: base.c + Sn.T.c, f: base.f + Sn.T.f }), P = solve('pm', R);
     renderResult(A, H, R, P, Sn);
     renderBar(A, P, Sn);
