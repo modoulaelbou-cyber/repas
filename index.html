@@ -76,7 +76,7 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
 /* Mise en page */
 .layout { display: grid; gap: 20px; margin-top: 20px; grid-template-columns: minmax(0, 1fr); }
 .picker { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
-.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: var(--surface2); padding: 4px; border-radius: 10px; }
+.seg { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; background: var(--surface2); padding: 4px; border-radius: 10px; }
 .seg button { min-height: 56px; border: 0; background: transparent; border-radius: 7px; font-weight: 600; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.2; padding: 4px 8px; }
 .seg button small { font-weight: 500; font-size: 12px; color: var(--muted); }
 .seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
@@ -154,6 +154,8 @@ h2 { margin: 0; font: 700 22px/1 var(--display); text-transform: uppercase; lett
 .sug button b { display: block; font-weight: 700; }
 .sug button small { display: block; font-size: 12px; color: var(--muted); }
 .sug button:hover { background: var(--surface2); }
+.sug .suball { border-style: dashed; border-color: var(--line); }
+.sugfull { max-height: 360px; overflow-y: auto; padding: 4px 0; }
 .foot { margin: 0; font-size: 12.5px; color: var(--muted); }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .cta { min-height: 44px; padding: 8px 16px; border: 0; border-radius: 8px; background: var(--ink); color: var(--bg); font-weight: 600; }
@@ -346,6 +348,7 @@ body:not([data-view="repas"]) .bar { display: none; }
             <div class="ff"><label for="fp">Protéines / 100 g</label><input id="fp" type="number" inputmode="decimal" min="0" max="100" step="0.1" required></div>
             <div class="ff"><label for="fc">Glucides / 100 g</label><input id="fc" type="number" inputmode="decimal" min="0" max="100" step="0.1" required></div>
             <div class="ff"><label for="fl">Lipides / 100 g</label><input id="fl" type="number" inputmode="decimal" min="0" max="100" step="0.1" required></div>
+            <div class="ff"><label for="fk">Calories / 100 g</label><input id="fk" type="number" inputmode="decimal" min="0" max="900" step="1" placeholder="Optionnel (étiquette)"></div>
             <div class="ff"><label for="ffb">Fibres / 100 g</label><input id="ffb" type="number" inputmode="decimal" min="0" max="100" step="0.1" placeholder="Optionnel"></div>
             <div class="ff"><label for="fu">Poids d'une portion (g)</label><input id="fu" type="number" inputmode="decimal" min="0" step="1" placeholder="Optionnel"></div>
             <div class="ff"><label for="fm">Maximum par repas</label><input id="fm" type="number" inputmode="decimal" min="0" step="1" placeholder="Optionnel"></div>
@@ -625,7 +628,7 @@ body:not([data-view="repas"]) .bar { display: none; }
   function addCustom(c) {
     var u = +c.u > 0 ? +c.u : 0;
     add(c.id, c.name, c.sec, MY, +c.p || 0, +c.c || 0, +c.f || 0, u ? 1 : DEFQ[c.sec], u ? { u: ['portion', 'portions', u], mine: true } : { mine: true });
-    var it = D[D.length - 1]; it.kcal = it.p * 4 + it.c * 4 + it.f * 9; it.fib = +c.fb || 0; setMax(it, c.max); return it;
+    var it = D[D.length - 1]; it.kcal = it.p * 4 + it.c * 4 + it.f * 9; if (+c.fk > 0) it.kc = +c.fk; it.fib = +c.fb || 0; setMax(it, c.max); return it;
   }
   CUSTOM = CUSTOM.filter(function (c) { return c && c.id && c.name && 'pcle'.indexOf(c.sec) > -1; });
   CUSTOM.forEach(addCustom);
@@ -640,6 +643,7 @@ body:not([data-view="repas"]) .bar { display: none; }
   }
   function applyEdit(it, e) {
     if (!ORIG[it.id]) ORIG[it.id] = { name: it.name, p: it.p, c: it.c, f: it.f, def: it.def, u: it.u ? it.u.slice() : null, max: it.max, fib: it.fib };
+    if (+e.fk > 0) it.kc = +e.fk; else delete it.kc;
     if (e.name) it.name = e.name;
     it.p = +e.p || 0; it.c = +e.c || 0; it.f = +e.f || 0; setUnit(it, e.u);
     if (e.fb != null && e.fb !== '') it.fib = +e.fb || 0; else it.fib = ORIG[it.id].fib || 0;
@@ -696,7 +700,8 @@ body:not([data-view="repas"]) .bar { display: none; }
   var state = {
     tgt: { p: DEFT.p, c: DEFT.c, f: DEFT.f }, meal: 'am', cat: 'all', q: '',
     am: { sel: ['skyr', 'flocons', 'banane', 'bpc'], pins: {}, force: {} },
-    pm: { sel: ['poulet', 'riz', 'huile', 'brocoli'], pins: {}, force: {} }
+    pm: { sel: ['poulet', 'riz', 'huile', 'brocoli'], pins: {}, force: {} },
+    sn: { sel: [], pins: {}, force: {} }
   };
   try {
     var raw = localStorage.getItem(KEY);
@@ -704,14 +709,14 @@ body:not([data-view="repas"]) .bar { display: none; }
       var s = JSON.parse(raw);
       if (s && s.tgt) {
         ['p', 'c', 'f'].forEach(function (k) { if (s.tgt[k] >= 0) state.tgt[k] = +s.tgt[k]; });
-        ['am', 'pm'].forEach(function (m) {
+        ['am', 'pm', 'sn'].forEach(function (m) {
           if (s[m] && Array.isArray(s[m].sel)) {
             state[m].sel = s[m].sel.filter(function (id) { return BY[id]; });
             state[m].pins = s[m].pins || {};
             state[m].force = s[m].force || {};
           }
         });
-        if (s.meal === 'am' || s.meal === 'pm') state.meal = s.meal;
+        if (s.meal === 'am' || s.meal === 'pm' || s.meal === 'sn') state.meal = s.meal;
         if (s.day && typeof s.day === 'object') state.day = s.day;
         if (s.tom && typeof s.tom === 'object') state.tomSaved = s.tom;
       }
@@ -726,29 +731,32 @@ body:not([data-view="repas"]) .bar { display: none; }
   function cleanMeal(m) { return { sel: m && Array.isArray(m.sel) ? m.sel.filter(function (id) { return BY[id]; }) : [], pins: (m && m.pins) || {}, force: (m && m.force) || {} }; }
   function addDays(iso, n) { var d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); var z = function (x) { return (x < 10 ? '0' : '') + x; }; return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()); }
   var TS = state.tomSaved || {};
-  state.T = { am: state.am, pm: state.pm };
-  state.N = { am: cleanMeal(TS.am), pm: cleanMeal(TS.pm), forDate: TS.forDate || '', acts: Array.isArray(TS.acts) ? TS.acts : null, work: typeof TS.work === 'boolean' ? TS.work : null };
+  state.T = { am: state.am, pm: state.pm, sn: state.sn };
+  state.N = { am: cleanMeal(TS.am), pm: cleanMeal(TS.pm), sn: cleanMeal(TS.sn), forDate: TS.forDate || '', acts: Array.isArray(TS.acts) ? TS.acts : null, work: typeof TS.work === 'boolean' ? TS.work : null };
   state.when = 'today'; state.tomKey = DKEYS[(new Date().getDay() + 1) % 7]; state.tomDate = addDays(state.saveDate, 1);
-  function nCount(C) { return C.am.sel.length + C.pm.sel.length; }
+  function nCount(C) { return C.am.sel.length + C.pm.sel.length + C.sn.sel.length; }
   /* Les repas préparés hier pour aujourd'hui (ou avant) sont prêts à être chargés */
   function readyToLoad() { return nCount(state.N) > 0 && state.N.forDate && state.N.forDate <= state.saveDate; }
-  function syncBack() { var C = state.when === 'tom' ? state.N : state.T; C.am = state.am; C.pm = state.pm; }
-  function bindWhen(w) { syncBack(); state.when = w; var C = w === 'tom' ? state.N : state.T; state.am = C.am; state.pm = C.pm; state.ndArm = false; state.saveOpen = false; }
+  function syncBack() { var C = state.when === 'tom' ? state.N : state.T; C.am = state.am; C.pm = state.pm; C.sn = state.sn; }
+  function bindWhen(w) { syncBack(); state.when = w; var C = w === 'tom' ? state.N : state.T; state.am = C.am; state.pm = C.pm; state.sn = C.sn; state.ndArm = false; state.saveOpen = false; }
   state.editId = ''; state.saveOpen = false; state.mealName = ''; state.mflash = ''; state.manage = false; state.mArm = '';
 
   /* Repas enregistrés + aliments récents */
   var MKEY = 'calculateur-repas-meals-v1', RKEY = 'calculateur-repas-recent-v1';
   var MEALS = lsGet(MKEY, []); if (!Array.isArray(MEALS)) MEALS = [];
   var RECENT = lsGet(RKEY, []); if (!Array.isArray(RECENT)) RECENT = [];
+  var UKEY = 'calculateur-repas-use-v1', USE = lsGet(UKEY, {}); if (!USE || typeof USE !== 'object') USE = {};
+  function countUse(ids) { ids.forEach(function (id) { if (BY[id]) USE[id] = (USE[id] || 0) + 1; }); lsSet(UKEY, USE); }
   function touchRecent(ids) {
+    countUse(ids);
     ids.slice().reverse().forEach(function (id) { if (!BY[id]) return; RECENT = RECENT.filter(function (x) { return x !== id; }); RECENT.unshift(id); });
     RECENT = RECENT.slice(0, 16); lsSet(RKEY, RECENT);
   }
   function save() {
     syncBack();
     if (state.when === 'tom' && nCount(state.N)) state.N.forDate = state.tomDate;
-    var tom = { am: state.N.am, pm: state.N.pm, forDate: state.N.forDate, acts: state.N.acts, work: state.N.work };
-    try { localStorage.setItem(KEY, JSON.stringify({ tgt: state.tgt, meal: state.meal, am: state.T.am, pm: state.T.pm, day: state.day, tom: tom })); } catch (e) {}
+    var tom = { am: state.N.am, pm: state.N.pm, sn: state.N.sn, forDate: state.N.forDate, acts: state.N.acts, work: state.N.work };
+    try { localStorage.setItem(KEY, JSON.stringify({ tgt: state.tgt, meal: state.meal, am: state.T.am, pm: state.T.pm, sn: state.T.sn, day: state.day, tom: tom })); } catch (e) {}
   }
 
   /* ---------- Profil, planning, suivi ---------- */
@@ -810,7 +818,7 @@ body:not([data-view="repas"]) .bar { display: none; }
   }
 
   function isAuto(m, it) {
-    if (it.sec === 'e') return false;
+    if (it.sec === 'e' || m === 'sn') return false;
     var s = state[m];
     if (s.pins[it.id] != null) return false;
     if (s.force[it.id]) return true;
@@ -842,14 +850,14 @@ body:not([data-view="repas"]) .bar { display: none; }
         });
       });
     }
-    var T = { p: 0, c: 0, f: 0, fib: 0 };
+    var T = { p: 0, c: 0, f: 0, fib: 0, k: 0 };
     var rows = items.map(function (it) {
       var g = q[it.id], r = { it: it, g: g, p: it.p * g / 100, c: it.c * g / 100, f: it.f * g / 100, fib: (it.fib || 0) * g / 100, auto: isAuto(m, it), pinned: s.pins[it.id] != null };
-      r.kcal = kcalOf(r);
-      T.p += r.p; T.c += r.c; T.f += r.f; T.fib += r.fib;
+      r.kcal = it.kc ? it.kc * g / 100 : kcalOf(r);
+      T.p += r.p; T.c += r.c; T.f += r.f; T.fib += r.fib; T.k += r.kcal;
       return r;
     });
-    T.kcal = kcalOf(T);
+    T.kcal = T.k;
     return { rows: rows, T: T, auto: auto, capped: capped };
   }
 
@@ -917,21 +925,34 @@ body:not([data-view="repas"]) .bar { display: none; }
       var it = c.it, g = sugQty(it, need, k); if (g <= 0) return;
       var add = { p: it.p * g / 100, c: it.c * g / 100, f: it.f * g / 100 };
       if (add[k] < Math.max(TOL[k], need * 0.25)) return;
-      var pen = Math.max(0, need - TOL[k] - add[k]) + Math.max(0, add[k] - need - TOL[k]);
+      var pen = Math.max(0, add[k] - need - TOL[k]);
       ['p', 'c', 'f'].forEach(function (j) { if (j !== k) pen += Math.max(0, add[j] - room[j]); });
-      var ro = other.indexOf(it.id), ri = RECENT.indexOf(it.id);
-      res.push({ it: it, g: g, add: add[k], pen: pen, tier: c.tier, tag: c.tag, ord: c.ord, rank: ro > -1 ? 0 : ri > -1 ? 1 + ri / 100 : 2 });
+      res.push({ it: it, g: g, add: add[k], pen: pen, tier: c.tier, tag: c.tag, ord: c.ord, use: (USE[it.id] || 0) + (other.indexOf(it.id) > -1 ? 3 : 0) });
     });
-    res.sort(function (a, b) { return Math.round(a.pen / 5) - Math.round(b.pen / 5) || a.tier - b.tier || a.rank - b.rank || a.ord - b.ord; });
+    /* d'abord ce qui rentre dans le repas, puis ce que tu manges souvent, puis sans cuisson en plus */
+    res.sort(function (a, b) { return Math.round(a.pen / 5) - Math.round(b.pen / 5) || (b.use >= 3) - (a.use >= 3) || b.use - a.use || a.tier - b.tier || b.add - a.add || a.ord - b.ord; });
     var out = [], subs = {};
     res.forEach(function (r) { if (out.length >= 3 || subs[r.it.sub]) return; subs[r.it.sub] = 1; out.push(r); });
     return out;
   }
-  function sugHtml(list, k) {
+  /* Tous les aliments de la catégorie, du plus concentré au moins concentré (moins de poids pour le même apport) */
+  function sugAll(k, S, RT, m) {
+    var sec = SECOF[k], need = RT[k] - S.T[k], ids = S.rows.map(function (r) { return r.it.id; });
+    var hotIds = S.rows.map(function (r) { return r.it.id; });
+    return D.filter(function (it) { return it.sec === sec && ids.indexOf(it.id) < 0 && it[k] > 0; }).map(function (it) {
+      var g = sugQty(it, need, k), tag = '';
+      if (HOTC[it.id] || (sec === 'p' && !READYP[it.id] && (it.sub === V || it.sub === PO || it.id === 'oeuf' || it.id === 'blanc'))) {
+        var gr = ''; hotIds.forEach(function (h) { gr = gr || sameCook(h, it.id); });
+        tag = gr ? GLAB[gr] : 'cuisson en plus';
+      }
+      return { it: it, g: g, add: it[k] * g / 100, tag: tag, use: USE[it.id] || 0 };
+    }).sort(function (a, b) { return b.it[k] - a.it[k] || b.use - a.use; });
+  }
+  function sugHtml(list, k, all) {
     return '<span class="sug"><span class="sugl">Pour compléter :</span>' + list.map(function (r) {
       var it = r.it, q = it.u ? (function (n) { return nf(n, 1) + ' ' + (n > 1 ? it.u[1] : it.u[0]); })(r.g / it.u[2]) : nf(r.g) + ' g';
-      return '<button type="button" data-sug="' + it.id + '" data-g="' + Math.round(r.g * 10) / 10 + '"><b>' + esc(it.name) + ' · ' + esc(q) + '</b><small>+' + nf(r.add) + ' g de ' + NAMES[k] + (r.tag ? ' · ' + r.tag : '') + '</small></button>';
-    }).join('') + '</span>';
+      return '<button type="button" data-sug="' + it.id + '" data-g="' + Math.round(r.g * 10) / 10 + '"><b>' + esc(it.name) + ' · ' + esc(q) + '</b><small>+' + nf(r.add) + ' g de ' + NAMES[k] + (r.use >= 3 ? ' · souvent' : '') + (r.tag ? ' · ' + r.tag : '') + '</small></button>';
+    }).join('') + (all ? '' : '<button type="button" class="suball" data-suball="' + k + '">' + (state.sugAll === k ? 'Masquer la liste' : 'Voir tous les aliments') + '<small>du plus concentré en ' + NAMES[k] + ' au moins concentré</small></button>') + '</span>';
   }
 
   /* ---------- Rendu : résultat ---------- */
@@ -953,10 +974,11 @@ body:not([data-view="repas"]) .bar { display: none; }
       if (it.edited) line += ' · valeurs modifiées';
       if (row.auto && row.g >= cap(it) - 0.5) line += ' · maximum par repas atteint';
       var tags = '', btn = '';
-      if (row.auto) tags = '<span class="tag auto">Calculé</span>';
+      if (m === 'sn') tags = '';
+      else if (row.auto) tags = '<span class="tag auto">Calculé</span>';
       else if (row.pinned) tags = '<span class="tag">Modifié</span>';
       else tags = '<span class="tag">Fixe</span>';
-      if (it.sec !== 'e' && !row.auto) btn += '<button class="mini" data-act="calc" type="button">Recalculer</button>';
+      if (it.sec !== 'e' && !row.auto && m !== 'sn') btn += '<button class="mini" data-act="calc" type="button">Recalculer</button>';
       else if (it.sec === 'e' && row.pinned) btn += '<button class="mini" data-act="std" type="button">Quantité standard</button>';
       h += '<li class="row r' + it.sec + '" data-id="' + it.id + '"><div class="rname"><strong>' + esc(it.name) + '</strong><span class="sublin">' + line + '</span></div>' +
         '<div class="rqty"><input class="qin" type="number" inputmode="decimal" min="0" step="' + d.step + '" value="' + d.v + '" aria-label="Quantité : ' + esc(it.name) + '"><span class="qu">' + d.unit + '</span></div>' +
@@ -971,14 +993,14 @@ body:not([data-view="repas"]) .bar { display: none; }
       '<div class="ml"><b>' + nf(T.f) + '</b><span>Lip.</span></div></div></div>';
   }
   var COL = { p: 'var(--cp)', c: 'var(--cc)', f: 'var(--cl)', fib: 'var(--ok)' };
-  function dayGauge(k, a, e, t) {
-    var tot = a + e, max = Math.max(t, tot, 1), over = tot > t + TOL[k];
+  function dayGauge(k, a, e, t, sn) {
+    sn = sn || 0; var tot = a + e + sn, max = Math.max(t, tot, 1), over = tot > t + TOL[k];
     var rest = t - tot;
     var restTxt = rest >= -0.5 ? 'Reste ' + nf(Math.max(rest, 0)) + ' g' : 'Dépasse de ' + nf(-rest) + ' g';
     return '<div class="gauge"><div class="lab"><span><i class="dot" style="background:' + COL[k] + '"></i>' + NAMES[k].replace(/^./, function (c) { return c.toUpperCase(); }) + '</span>' +
       '<span class="' + (over ? 'ov' : '') + '">' + nf(tot) + ' / ' + nf(t) + ' g</span></div>' +
-      '<div class="track"><i class="sg am" style="width:' + (a / max * 100) + '%;background:' + COL[k] + '"></i><i class="sg" style="width:' + (e / max * 100) + '%;background:' + COL[k] + '"></i><i class="tick" style="left:calc(' + (t / max * 100) + '% - 1px)"></i></div>' +
-      '<div class="sub">Matin ' + nf(a) + ' · Soir ' + nf(e) + ' · ' + restTxt + '</div></div>';
+      '<div class="track"><i class="sg am" style="width:' + (a / max * 100) + '%;background:' + COL[k] + '"></i><i class="sg" style="width:' + ((e + sn) / max * 100) + '%;background:' + COL[k] + '"></i><i class="tick" style="left:calc(' + (t / max * 100) + '% - 1px)"></i></div>' +
+      '<div class="sub">Matin ' + nf(a) + ' · Soir ' + nf(e) + (sn >= 0.5 ? ' · À côté ' + nf(sn) : '') + ' · ' + restTxt + '</div></div>';
   }
   function mealGauge(k, have, t) {
     var pct = t > 0 ? Math.min(100, have / t * 100) : 0, over = have > t + TOL[k];
@@ -999,7 +1021,11 @@ body:not([data-view="repas"]) .bar { display: none; }
         else if (!P.auto[sec].length) out.push(['warn', 'Il manque ' + nf(-diff) + ' g de ' + nm + '. Ajoute une source (' + EX[k] + ') ou passe un aliment fixe en « Recalculer ».']);
         else if (P.capped[sec]) out.push(['warn', 'Maximum atteint avec ces aliments : il manque ' + nf(-diff) + ' g de ' + nm + '. Ajoute une autre source (' + EX[k] + ').']);
         else out.push(['warn', 'Il manque ' + nf(-diff) + ' g de ' + nm + ' (portions arrondies).']);
-        if (sg.length) out[out.length - 1].push(sugHtml(sg, k));
+        if (sg.length || P.rows.length) {
+          var hs = sg.length ? sugHtml(sg, k) : sugHtml([], k);
+          if (state.sugAll === k) hs += '<span class="sug sugfull"><span class="sugl">Tous les aliments (' + NAMES[k] + ' pour 100 g, du plus au moins) :</span>' + sugAll(k, P, R, m).map(function (r) { return sugHtml([r], k, true).replace(/^<span class="sug"><span class="sugl">Pour compléter :<\/span>/, '').replace(/<\/span>$/, '').replace('<small>+', '<small>' + nf(r.it[k], 1) + ' g / 100 g · +'); }).join('') + '</span>';
+          out[out.length - 1].push(hs);
+        }
       } else {
         out.push(['bad', 'Dépasse de ' + nf(diff) + ' g de ' + nm + ' : retire un aliment ou baisse une quantité fixée.' + (k === 'f' ? ' La viande, le fromage ou les sauces apportent déjà du gras.' : '')]);
       }
@@ -1007,22 +1033,30 @@ body:not([data-view="repas"]) .bar { display: none; }
     return out;
   }
 
-  function renderResult(A, H, R, P) {
+  function renderResult(A, H, R, P, Sn) {
     var el = $('#result'), g = state.tgt, h = '';
     // Carte « journée »
-    var tk = kcalOf({ p: g.p, c: g.c, f: g.f }), dt = { p: A.T.p + P.T.p, c: A.T.c + P.T.c, f: A.T.f + P.T.f };
-    var eaten = kcalOf(dt), left = tk - eaten;
+    var tk = kcalOf({ p: g.p, c: g.c, f: g.f });
+    var eaten = A.T.kcal + P.T.kcal + Sn.T.kcal, left = tk - eaten;
     h += '<div class="card"><h2>' + (state.when === 'tom' ? 'Demain (' + Nutri.DAY_LABEL[state.tomKey].toLowerCase() + ')' : 'Ma journée') + '</h2>' +
       '<div class="readout"><div class="kcal">' + nf(eaten) + '<small>/ ' + nf(tk) + ' kcal</small></div>' +
       '<p class="need">' + (left >= 0 ? 'Reste <b>' + nf(left) + ' kcal</b>' : 'Dépasse de <b>' + nf(-left) + ' kcal</b>') + '</p></div>' +
-      dayGauge('p', A.T.p, P.T.p, g.p) + dayGauge('c', A.T.c, P.T.c, g.c) + dayGauge('f', A.T.f, P.T.f, g.f) + dayGauge('fib', A.T.fib, P.T.fib, state.fibGoal) +
+      dayGauge('p', A.T.p, P.T.p, g.p, Sn.T.p) + dayGauge('c', A.T.c, P.T.c, g.c, Sn.T.c) + dayGauge('f', A.T.f, P.T.f, g.f, Sn.T.f) + dayGauge('fib', A.T.fib, P.T.fib, state.fibGoal, Sn.T.fib) +
       '<p class="foot">Trait noir = objectif. Barre claire = matin, barre pleine = soir. Les fibres ne sont pas calculées : elles dépendent des aliments choisis.</p>' +
       '<div class="actions"><button class="' + (state.ndArm ? 'cta' : 'mini') + '" type="button" data-act="newday">' + (state.ndArm ? 'Confirmer : vider les 2 repas' : 'Nouvelle journée') + '</button>' + (state.ndArm ? '<button class="mini" type="button" data-act="newdayno">Annuler</button>' : '') + '</div></div>';
-    h += qualityCard(A, P);
+    h += qualityCard(A, { rows: P.rows.concat(Sn.rows) });
 
     // Carte « repas courant »
-    var m = state.meal, S = m === 'am' ? A : P, RT = m === 'am' ? H : R;
-    var need = (m === 'am' ? 'Objectif du matin (la moitié de la journée)' : (state.am.sel.length ? 'Reste à manger ce soir' : 'Objectif du soir (la moitié de la journée)')) +
+    var m = state.meal;
+    if (m === 'sn') {
+      h += '<div class="card" id="mealcard"><h2>En dehors des repas</h2><p class="need">Tout ce que tu manges à côté (snacks, fruits, boissons, grignotage). C\'est compté dans ta journée et retiré de ce qu\'il reste pour le soir.</p>';
+      if (!Sn.rows.length) h += '<p class="emptyres">Coche ce que tu as mangé : une portion standard s\'ajoute, change la quantité si besoin.</p>';
+      else h += readout(Sn.T) + rowsHtml(Sn, 'sn') + '<div class="actions"><button class="mini" data-act="clear" type="button">Tout décocher</button></div>';
+      if (state.mflash) { h += '<p class="flash" role="status">' + esc(state.mflash) + '</p>'; state.mflash = ''; }
+      el.innerHTML = h + '</div>'; return;
+    }
+    var S = m === 'am' ? A : P, RT = m === 'am' ? H : R;
+    var need = (m === 'am' ? 'Objectif du matin (la moitié de la journée)' : (state.am.sel.length ? 'Reste à manger ce soir' : 'Objectif du soir (la moitié de la journée)') + (state.sn.sel.length ? ', à côté déduit' : '')) +
       ' : <b>' + nf(RT.p) + ' g</b> de protéines · <b>' + nf(RT.c) + ' g</b> de glucides · <b>' + nf(RT.f) + ' g</b> de lipides (≈ ' + nf(kcalOf(RT)) + ' kcal)';
     h += '<div class="card" id="mealcard"><h2>' + (m === 'am' ? 'Repas du matin' : 'Repas du soir') + '</h2>';
     h += '<p class="need">' + need + '</p>';
@@ -1044,9 +1078,9 @@ body:not([data-view="repas"]) .bar { display: none; }
     el.innerHTML = h;
   }
 
-  function renderBar(A, P) {
-    var S = state.meal === 'am' ? A : P, n = state[state.meal].sel.length, b = $('#bar');
-    b.innerHTML = '<div class="bs"><b>P ' + nf(S.T.p) + ' · G ' + nf(S.T.c) + ' · L ' + nf(S.T.f) + '</b><span>' + (state.when === 'tom' ? 'Demain · ' : '') + (state.meal === 'am' ? 'Matin' : 'Soir') + ' · ' + nf(S.T.kcal) + ' kcal · ' + n + ' aliment' + (n > 1 ? 's' : '') + '</span></div>' +
+  function renderBar(A, P, Sn) {
+    var S = state.meal === 'am' ? A : state.meal === 'sn' ? Sn : P, n = state[state.meal].sel.length, b = $('#bar');
+    b.innerHTML = '<div class="bs"><b>P ' + nf(S.T.p) + ' · G ' + nf(S.T.c) + ' · L ' + nf(S.T.f) + '</b><span>' + (state.when === 'tom' ? 'Demain · ' : '') + (state.meal === 'am' ? 'Matin' : state.meal === 'sn' ? 'À côté' : 'Soir') + ' · ' + nf(S.T.kcal) + ' kcal · ' + n + ' aliment' + (n > 1 ? 's' : '') + '</span></div>' +
       '<button type="button" id="goto">Voir les quantités</button>';
   }
 
@@ -1059,26 +1093,27 @@ body:not([data-view="repas"]) .bar { display: none; }
     $('#when').innerHTML = h;
   }
   function renderSeg() {
-    $('#seg').innerHTML = [['am', 'Repas du matin', '50 % de la journée'], ['pm', 'Repas du soir', 'le reste de la journée']].map(function (m) {
+    $('#seg').innerHTML = [['am', 'Matin', 'repas'], ['pm', 'Soir', 'repas'], ['sn', 'À côté', 'snacks']].map(function (m) {
       var n = state[m[0]].sel.length;
-      return '<button type="button" data-m="' + m[0] + '" aria-pressed="' + (state.meal === m[0]) + '">' + m[1] + '<small>' + m[2] + ' · ' + n + ' aliment' + (n > 1 ? 's' : '') + '</small></button>';
+      return '<button type="button" data-m="' + m[0] + '" aria-pressed="' + (state.meal === m[0]) + '">' + m[1] + '<small>' + m[2] + ' · ' + n + '</small></button>';
     }).join('');
-    var nd = state.am.sel.length + state.pm.sel.length, prep = nCount(state.N) > 0, lbl;
+    var nd = state.am.sel.length + state.pm.sel.length + state.sn.sel.length, prep = nCount(state.N) > 0, lbl;
     if (state.when === 'tom') lbl = state.ndArm ? 'Confirmer : vider les repas de demain' : 'Vider les repas de demain';
-    else lbl = state.ndArm ? (prep ? 'Confirmer : remplacer par les repas préparés' : 'Confirmer : vider matin et soir') : (prep ? 'Nouvelle journée : charger les repas préparés' : 'Nouvelle journée : vider matin et soir');
+    else lbl = state.ndArm ? (prep ? 'Confirmer : remplacer par les repas préparés' : 'Confirmer : vider la journée') : (prep ? 'Nouvelle journée : charger les repas préparés' : 'Nouvelle journée : vider la journée');
     var show = state.when === 'tom' ? nd > 0 : (nd > 0 || prep);
     var hh = show ? '<button class="' + (state.ndArm ? 'cta' : 'mini') + '" type="button" data-act="newday">' + lbl + '</button>' + (state.ndArm ? '<button class="mini" type="button" data-act="newdayno">Annuler</button>' : '') : '';
     if (state.when === 'tom' && !nd && nCount(state.T)) hh += '<button class="mini" type="button" data-act="copytoday">Copier les repas d\'aujourd\'hui</button>';
     $('#ndtop').innerHTML = hh;
     renderWhen();
-    $('#fhint').textContent = 'Coche tes sources : les quantités se calculent pour ce repas. Petit chiffre = g pour 100 g.';
+    $('#fhint').textContent = state.meal === 'sn' ? 'Coche ce que tu as mangé en dehors des repas : une portion standard s\'ajoute, tu peux la changer.' : 'Coche tes sources : les quantités se calculent pour ce repas. Petit chiffre = g pour 100 g.';
   }
 
   function render() {
     var g = state.tgt, H = { p: g.p / 2, c: g.c / 2, f: g.f / 2, ov: { p: 0, c: 0, f: 0 } };
-    var A = solve('am', H), R = state.am.sel.length ? remaining(A.T) : H, P = solve('pm', R);
-    renderResult(A, H, R, P);
-    renderBar(A, P);
+    var A = solve('am', H), Sn = solve('sn', null), base = state.am.sel.length ? A.T : H;
+    var R = remaining({ p: base.p + Sn.T.p, c: base.c + Sn.T.c, f: base.f + Sn.T.f }), P = solve('pm', R);
+    renderResult(A, H, R, P, Sn);
+    renderBar(A, P, Sn);
     renderSeg();
   }
 
@@ -1117,7 +1152,7 @@ body:not([data-view="repas"]) .bar { display: none; }
     }).join('');
   }
   function renderPresets() {
-    $('#presets').innerHTML = PRESETS[state.meal].map(function (p, i) { return '<button type="button" data-i="' + i + '">' + p[0] + '</button>'; }).join('');
+    $('#presets').innerHTML = (PRESETS[state.meal] || []).map(function (p, i) { return '<button type="button" data-i="' + i + '">' + p[0] + '</button>'; }).join('');
     renderSaved();
   }
   function renderSaved() {
@@ -1391,7 +1426,7 @@ body:not([data-view="repas"]) .bar { display: none; }
   function openEdit(id) {
     var it = BY[id]; if (!it) return;
     $('#ffood').reset(); $('#fflash').textContent = ''; setMode(it);
-    $('#fn').value = it.name; $('#fs').value = it.sec; $('#fp').value = it.p; $('#fc').value = it.c; $('#fl').value = it.f; $('#fu').value = it.u ? it.u[2] : ''; $('#fm').value = maxShown(it); $('#ffb').value = it.fib || '';
+    $('#fn').value = it.name; $('#fs').value = it.sec; $('#fp').value = it.p; $('#fc').value = it.c; $('#fl').value = it.f; $('#fu').value = it.u ? it.u[2] : ''; $('#fm').value = maxShown(it); $('#ffb').value = it.fib || ''; $('#fk').value = it.kc || '';
     var d = $('#addfood'); d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   function closeEdit() { $('#ffood').reset(); setMode(null); }
@@ -1431,7 +1466,7 @@ body:not([data-view="repas"]) .bar { display: none; }
   $('#ffood').addEventListener('submit', function (e) {
     e.preventDefault();
     var name = $('#fn').value.trim(), fl = $('#fflash');
-    var c = { id: 'u' + Date.now(), name: name, sec: $('#fs').value, p: parseFloat($('#fp').value), c: parseFloat($('#fc').value), f: parseFloat($('#fl').value), u: parseFloat($('#fu').value) || 0, max: parseFloat($('#fm').value) || 0, fb: parseFloat($('#ffb').value) || 0 };
+    var c = { id: 'u' + Date.now(), name: name, sec: $('#fs').value, p: parseFloat($('#fp').value), c: parseFloat($('#fc').value), f: parseFloat($('#fl').value), u: parseFloat($('#fu').value) || 0, max: parseFloat($('#fm').value) || 0, fb: parseFloat($('#ffb').value) || 0, fk: parseFloat($('#fk').value) || 0 };
     if (!name || [c.p, c.c, c.f].some(function (v) { return isNaN(v) || v < 0 || v > 100; }) || c.p + c.c + c.f + c.fb > 100) {
       fl.className = 'flash err'; fl.textContent = 'Vérifie les valeurs : elles sont pour 100 g, et leur total ne peut pas dépasser 100.'; return;
     }
@@ -1441,11 +1476,11 @@ body:not([data-view="repas"]) .bar { display: none; }
       var it = BY[state.editId];
       if (it.mine) {
         var cc = CUSTOM.filter(function (x) { return x.id === it.id; })[0];
-        cc.name = c.name; cc.sec = c.sec; cc.p = c.p; cc.c = c.c; cc.f = c.f; cc.u = c.u; cc.max = c.max; cc.fb = c.fb; lsSet(FKEY, CUSTOM);
+        cc.name = c.name; cc.sec = c.sec; cc.p = c.p; cc.c = c.c; cc.f = c.f; cc.u = c.u; cc.max = c.max; cc.fb = c.fb; cc.fk = c.fk; lsSet(FKEY, CUSTOM); if (c.fk > 0) it.kc = c.fk; else delete it.kc;
         it.name = c.name; it.sec = c.sec; it.fix = c.sec === 'e'; it.p = c.p; it.c = c.c; it.f = c.f; setUnit(it, c.u); setMax(it, c.max); it.fib = c.fb;
         it.kcal = it.p * 4 + it.c * 4 + it.f * 9;
       } else {
-        restoreOrig(it); EDITS[it.id] = { name: c.name, p: c.p, c: c.c, f: c.f, u: c.u, max: c.max, fb: c.fb }; lsSet(OKEY, EDITS); applyEdit(it, EDITS[it.id]);
+        restoreOrig(it); EDITS[it.id] = { name: c.name, p: c.p, c: c.c, f: c.f, u: c.u, max: c.max, fb: c.fb, fk: c.fk }; lsSet(OKEY, EDITS); applyEdit(it, EDITS[it.id]);
       }
       fl.className = 'flash'; fl.textContent = '« ' + it.name + ' » modifié. Les quantités sont recalculées.';
       closeEdit(); save(); renderFoods(); renderMyList(); renderSaved(); render(); return;
@@ -1473,7 +1508,7 @@ body:not([data-view="repas"]) .bar { display: none; }
   function bmsg(t, err) { var el = $('#bflash'); el.className = 'flash' + (err ? ' err' : ''); el.textContent = t; }
   $('#bexp').addEventListener('click', async function () {
     var data = { app: 'calculateur-repas', v: 1, exportedAt: new Date().toISOString(),
-      state: { tgt: state.tgt, am: state.am, pm: state.pm }, meals: MEALS, foods: CUSTOM, edits: EDITS, recent: RECENT, profile: PROF, body: BODY };
+      state: { tgt: state.tgt, am: state.am, pm: state.pm, sn: state.sn }, meals: MEALS, foods: CUSTOM, edits: EDITS, recent: RECENT, use: USE, profile: PROF, body: BODY };
     var name = 'repas-sauvegarde-' + state.saveDate + '.json', txt = JSON.stringify(data);
     try {
       var file = new File([txt], name, { type: 'application/json' });
@@ -1502,7 +1537,7 @@ body:not([data-view="repas"]) .bar { display: none; }
       if (d.edits && typeof d.edits === 'object') { for (var k in d.edits) EDITS[k] = d.edits[k]; lsSet(OKEY, EDITS); }
       if (d.profile && typeof d.profile === 'object') lsSet(PKEY, d.profile);
       if (Array.isArray(d.body)) { d.body.forEach(function (m) { if (m && /^\d{4}-\d{2}-\d{2}$/.test(m.d)) { BODY = BODY.filter(function (x) { return x.d !== m.d; }); BODY.push(m); } }); lsSet(BKEY, BODY); }
-      if (d.state && d.state.tgt) lsSet(KEY, { tgt: d.state.tgt, meal: state.meal, am: d.state.am || state.am, pm: d.state.pm || state.pm });
+      if (d.state && d.state.tgt) lsSet(KEY, { tgt: d.state.tgt, meal: state.meal, am: d.state.am || state.am, pm: d.state.pm || state.pm, sn: d.state.sn || state.sn }); if (d.use && typeof d.use === 'object') lsSet(UKEY, d.use);
       bmsg('Importé : ' + meals.length + ' repas, ' + foods.length + ' aliment(s)' + (Array.isArray(d.body) ? ', ' + d.body.length + ' mesure(s)' : '') + '. Rechargement…');
       setTimeout(function () { location.reload(); }, 900);
     };
@@ -1565,16 +1600,17 @@ body:not([data-view="repas"]) .bar { display: none; }
       if (!state.ndArm) { state.ndArm = true; render(); return; }
       state.ndArm = false;
       if (state.when === 'tom') {
-        state.am = { sel: [], pins: {}, force: {} }; state.pm = { sel: [], pins: {}, force: {} }; state.N.acts = null; state.N.work = null; state.N.forDate = '';
+        state.am = { sel: [], pins: {}, force: {} }; state.pm = { sel: [], pins: {}, force: {} }; state.sn = cleanMeal(); state.N.acts = null; state.N.work = null; state.N.forDate = '';
         state.mflash = 'Repas de demain vidés.';
         save(); syncTargets(); renderTargets(false); renderPresets(); renderFoods(); render(); return;
       }
       var prep = nCount(state.N) > 0;
-      if (prep) { state.T = { am: state.N.am, pm: state.N.pm }; state.day = { date: state.saveDate, acts: state.N.acts, work: state.N.work, water: 0 }; state.N = { am: cleanMeal(), pm: cleanMeal(), forDate: '', acts: null, work: null }; }
-      else { state.T = { am: cleanMeal(), pm: cleanMeal() }; state.day = { date: state.saveDate, acts: null, work: null, water: 0 }; }
-      state.am = state.T.am; state.pm = state.T.pm;
+      countUse(state.T.am.sel.concat(state.T.pm.sel, state.T.sn.sel));
+      if (prep) { state.T = { am: state.N.am, pm: state.N.pm, sn: state.N.sn }; state.day = { date: state.saveDate, acts: state.N.acts, work: state.N.work, water: 0 }; state.N = { am: cleanMeal(), pm: cleanMeal(), sn: cleanMeal(), forDate: '', acts: null, work: null }; }
+      else { state.T = { am: cleanMeal(), pm: cleanMeal(), sn: cleanMeal() }; state.day = { date: state.saveDate, acts: null, work: null, water: 0 }; }
+      state.am = state.T.am; state.pm = state.T.pm; state.sn = state.T.sn;
       state.meal = 'am'; state.saveOpen = false;
-      state.mflash = prep ? 'Nouvelle journée : tes repas préparés sont chargés.' : 'Nouvelle journée : les 2 repas sont remis à zéro.';
+      state.mflash = prep ? 'Nouvelle journée : tes repas préparés sont chargés.' : 'Nouvelle journée : tout est remis à zéro.';
       save(); syncTargets(); renderTargets(false); renderPresets(); renderFoods(); render();
       window.scrollTo({ top: 0, behavior: 'smooth' }); return;
     }
@@ -1584,6 +1620,8 @@ body:not([data-view="repas"]) .bar { display: none; }
     if (act === 'mealno') { state.saveOpen = false; render(); return; }
     if (act === 'gopm') { state.meal = 'pm'; save(); renderPresets(); renderFoods(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
     if (act === 'clear') { s.sel = []; s.pins = {}; s.force = {}; save(); renderFoods(); render(); return; }
+    var sa = b.getAttribute('data-suball');
+    if (sa) { state.sugAll = state.sugAll === sa ? '' : sa; render(); return; }
     var sgid = b.getAttribute('data-sug');
     if (sgid && BY[sgid]) {
       var it0 = BY[sgid], mm = state.meal;
