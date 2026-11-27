@@ -983,7 +983,7 @@ body:not([data-view="repas"]) .bar { display: none; }
       else if (it.sec === 'e' && row.pinned) btn += '<button class="mini" data-act="std" type="button">Quantité standard</button>';
       h += '<li class="row r' + it.sec + '" data-id="' + it.id + '"><div class="rname"><strong>' + esc(it.name) + '</strong><span class="sublin">' + line + '</span></div>' +
         '<div class="rqty"><input class="qin" type="number" inputmode="decimal" min="0" step="' + d.step + '" value="' + d.v + '" aria-label="Quantité : ' + esc(it.name) + '"><span class="qu">' + d.unit + '</span></div>' +
-        '<div class="rmeta">' + (it.cook && !it.u ? '<label class="ck">soit <input class="qck" type="number" inputmode="decimal" min="0" step="5" value="' + Math.round(row.g * it.cook) + '" aria-label="Poids cuit : ' + esc(it.name) + '"> g cuit</label>' : '') + tags + btn + '<button class="mini" data-act="edit" type="button">Modifier</button><button class="mini" data-act="remove" type="button">Retirer</button></div></li>';
+        '<div class="rmeta">' + (it.cook && !it.u ? '<label class="ck">soit <input class="qck" type="number" inputmode="decimal" min="0" step="5" value="' + Math.round(row.g * it.cook) + '" aria-label="Poids cuit : ' + esc(it.name) + '"> g cuit</label>' : '') + tags + btn + (m === 'sn' ? '<button class="mini" data-act="mv" data-to="am" type="button">→ Matin</button><button class="mini" data-act="mv" data-to="pm" type="button">→ Soir</button>' : '<button class="mini" data-act="mv" data-to="sn" data-g="' + Math.round(row.g * 10) / 10 + '" type="button">→ À côté</button>') + '<button class="mini" data-act="edit" type="button">Modifier</button><button class="mini" data-act="remove" type="button">Retirer</button></div></li>';
     });
     return h + '</ul>';
   }
@@ -1638,6 +1638,14 @@ body:not([data-view="repas"]) .bar { display: none; }
     var row = b.closest('.row'); if (!row) return;
     var id = row.getAttribute('data-id');
     if (act === 'edit') { openEdit(id); return; }
+    if (act === 'mv') {
+      var to = b.getAttribute('data-to'), d2 = state[to];
+      s.sel.splice(s.sel.indexOf(id), 1); delete s.pins[id]; delete s.force[id];
+      if (d2.sel.indexOf(id) < 0) d2.sel.push(id);
+      if (to === 'sn') d2.pins[id] = +b.getAttribute('data-g') || defQty(BY[id]); else { delete d2.pins[id]; delete d2.force[id]; }
+      state.mflash = '« ' + BY[id].name + ' » déplacé ' + (to === 'sn' ? 'dans À côté.' : to === 'am' ? 'dans le repas du matin.' : 'dans le repas du soir.');
+      refreshChips(); save(); render(); return;
+    }
     if (act === 'remove') { s.sel.splice(s.sel.indexOf(id), 1); delete s.pins[id]; delete s.force[id]; renderFoods(); }
     if (act === 'calc') { delete s.pins[id]; s.force[id] = true; }
     if (act === 'std') { delete s.pins[id]; }

@@ -1,5 +1,5 @@
 /* Service worker : garde l'app en cache pour qu'elle marche sans connexion. */
-var CACHE = 'calculateur-repas-v15';
+var CACHE = 'calculateur-repas-v16';
 var FILES = ['./', 'index.html', 'nutrition.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png'];
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(FILES); }).then(function () { return self.skipWaiting(); }));
