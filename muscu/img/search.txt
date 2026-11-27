@@ -1,0 +1,4 @@
+pu|pull-ups everkinetic
+pu2|pull up exercise svg
+ps|push-ups everkinetic
+ps2|push up exercise svg
