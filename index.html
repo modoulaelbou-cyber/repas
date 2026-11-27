@@ -714,6 +714,7 @@ body:not([data-view="repas"]) .bar { display: none; }
             state[m].sel = s[m].sel.filter(function (id) { return BY[id]; });
             state[m].pins = s[m].pins || {};
             state[m].force = s[m].force || {};
+            if (s[m].done) state[m].done = true;
           }
         });
         if (s.meal === 'am' || s.meal === 'pm' || s.meal === 'sn') state.meal = s.meal;
@@ -728,7 +729,7 @@ body:not([data-view="repas"]) .bar { display: none; }
   if (!state.day || state.day.date !== state.saveDate) state.day = { date: state.saveDate, acts: null, work: null, water: 0 };
   state.ndArm = false; state.qOpen = false; state.view = 'repas'; state.fibGoal = 30;
   /* Repas d'aujourd'hui (T) et repas préparés pour demain (N) ; state.am / state.pm pointent sur le jour affiché */
-  function cleanMeal(m) { return { sel: m && Array.isArray(m.sel) ? m.sel.filter(function (id) { return BY[id]; }) : [], pins: (m && m.pins) || {}, force: (m && m.force) || {} }; }
+  function cleanMeal(m) { return { sel: m && Array.isArray(m.sel) ? m.sel.filter(function (id) { return BY[id]; }) : [], pins: (m && m.pins) || {}, force: (m && m.force) || {}, done: !!(m && m.done) }; }
   function addDays(iso, n) { var d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); var z = function (x) { return (x < 10 ? '0' : '') + x; }; return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()); }
   var TS = state.tomSaved || {};
   state.T = { am: state.am, pm: state.pm, sn: state.sn };
@@ -1049,14 +1050,14 @@ body:not([data-view="repas"]) .bar { display: none; }
     // Carte « repas courant »
     var m = state.meal;
     if (m === 'sn') {
-      h += '<div class="card" id="mealcard"><h2>En dehors des repas</h2><p class="need">Tout ce que tu manges à côté (snacks, fruits, boissons, grignotage). C\'est compté dans ta journée et retiré de ce qu\'il reste pour le soir.</p>';
+      h += '<div class="card" id="mealcard"><h2>En dehors des repas</h2><p class="need">Tout ce que tu manges à côté (snacks, fruits, boissons, grignotage). C\'est retiré ' + (state.am.done ? 'du repas du soir (le matin est validé).' : 'du repas du matin ; s\'il est à zéro, le reste est retiré du soir.') + '</p>';
       if (!Sn.rows.length) h += '<p class="emptyres">Coche ce que tu as mangé : une portion standard s\'ajoute, change la quantité si besoin.</p>';
       else h += readout(Sn.T) + rowsHtml(Sn, 'sn') + '<div class="actions"><button class="mini" data-act="clear" type="button">Tout décocher</button></div>';
       if (state.mflash) { h += '<p class="flash" role="status">' + esc(state.mflash) + '</p>'; state.mflash = ''; }
       el.innerHTML = h + '</div>'; return;
     }
     var S = m === 'am' ? A : P, RT = m === 'am' ? H : R;
-    var need = (m === 'am' ? 'Objectif du matin (la moitié de la journée' + (state.sn.sel.length ? ', à côté déduit)' : ')') : (state.am.sel.length ? 'Reste à manger ce soir' : 'Objectif du soir (la moitié de la journée)') + (state.sn.sel.length ? ', à côté déduit' : '')) +
+    var need = (m === 'am' ? 'Objectif du matin (la moitié de la journée' + (state.sn.sel.length && !state.am.done ? ', à côté déduit)' : ')') : (state.am.sel.length ? 'Reste à manger ce soir' : 'Objectif du soir (la moitié de la journée)') + (state.sn.sel.length ? ', à côté déduit' : '')) +
       ' : <b>' + nf(RT.p) + ' g</b> de protéines · <b>' + nf(RT.c) + ' g</b> de glucides · <b>' + nf(RT.f) + ' g</b> de lipides (≈ ' + nf(kcalOf(RT)) + ' kcal)';
     h += '<div class="card" id="mealcard"><h2>' + (m === 'am' ? 'Repas du matin' : 'Repas du soir') + '</h2>';
     h += '<p class="need">' + need + '</p>';
@@ -1071,7 +1072,7 @@ body:not([data-view="repas"]) .bar { display: none; }
           '<button class="cta" type="button" data-act="mealok">Enregistrer</button><button class="mini" type="button" data-act="mealno">Annuler</button></div>';
       }
       h += '<div class="actions">' + (state.saveOpen ? '' : '<button class="cta" type="button" data-act="mealsave">Enregistrer ce repas</button>') +
-        (m === 'am' ? '<button class="mini" type="button" data-act="gopm">Composer le repas du soir</button>' : '') + '<button class="mini" data-act="clear" type="button">Tout décocher</button></div>';
+        (m === 'am' ? '<button class="' + (state.am.done ? 'cta' : 'mini') + '" type="button" data-act="amdone" aria-pressed="' + !!state.am.done + '">' + (state.am.done ? '✓ Repas du matin mangé' : 'J\'ai mangé ce repas') + '</button><button class="mini" type="button" data-act="gopm">Composer le repas du soir</button>' : '') + '<button class="mini" data-act="clear" type="button">Tout décocher</button></div>';
     }
     if (state.mflash) { h += '<p class="flash" role="status">' + esc(state.mflash) + '</p>'; state.mflash = ''; }
     h += '</div>';
@@ -1110,8 +1111,9 @@ body:not([data-view="repas"]) .bar { display: none; }
 
   function render() {
     var g = state.tgt, Sn = solve('sn', null);
-    /* ce qui est mangé à côté est retiré de la journée, puis le reste est partagé en deux */
-    var H = { p: Math.max(g.p - Sn.T.p, 0) / 2, c: Math.max(g.c - Sn.T.c, 0) / 2, f: Math.max(g.f - Sn.T.f, 0) / 2, ov: { p: 0, c: 0, f: 0 } };
+    /* ce qui est mangé à côté est retiré du matin ; quand le matin est à zéro ou déjà mangé, le reste est retiré du soir */
+    var cut = state.am.done ? 0 : 1;
+    var H = { p: Math.max(g.p / 2 - cut * Sn.T.p, 0), c: Math.max(g.c / 2 - cut * Sn.T.c, 0), f: Math.max(g.f / 2 - cut * Sn.T.f, 0), ov: { p: 0, c: 0, f: 0 } };
     var A = solve('am', H), base = state.am.sel.length ? A.T : H;
     var R = remaining({ p: base.p + Sn.T.p, c: base.c + Sn.T.c, f: base.f + Sn.T.f }), P = solve('pm', R);
     renderResult(A, H, R, P, Sn);
@@ -1620,6 +1622,7 @@ body:not([data-view="repas"]) .bar { display: none; }
     if (act === 'mealsave') { state.saveOpen = true; state.mealName = defaultMealName(); render(); var mi = $('#mname'); if (mi) { mi.focus(); mi.select(); } return; }
     if (act === 'mealok') { saveMeal(); return; }
     if (act === 'mealno') { state.saveOpen = false; render(); return; }
+    if (act === 'amdone') { state.am.done = !state.am.done; state.mflash = state.am.done ? 'Matin validé : ce que tu manges à côté est maintenant retiré du soir.' : 'Matin rouvert : ce que tu manges à côté est retiré du matin.'; save(); render(); return; }
     if (act === 'gopm') { state.meal = 'pm'; save(); renderPresets(); renderFoods(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
     if (act === 'clear') { s.sel = []; s.pins = {}; s.force = {}; save(); renderFoods(); render(); return; }
     var sa = b.getAttribute('data-suball');
