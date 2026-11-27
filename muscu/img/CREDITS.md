@@ -24,3 +24,5 @@ Elles ont été redimensionnées pour l'appli.
 | revcrunch-1, revcrunch-2 | https://commons.wikimedia.org/wiki/File:Leg-raises-2.png , https://commons.wikimedia.org/wiki/File:Leg-raises-1.png |
 | curldb-1, curldb-2 | https://commons.wikimedia.org/wiki/File:Biceps_curl_with_dumbbell_1.svg , https://commons.wikimedia.org/wiki/File:Biceps_curl_with_dumbbell_2.svg |
 | hammerdb-1, hammerdb-2 | https://commons.wikimedia.org/wiki/File:Bicep_hammer_curl_with_dumbbell_1.svg , https://commons.wikimedia.org/wiki/File:Bicep_hammer_curl_with_dumbbell_2.svg |
+| pullup-1, pullup-2 | https://commons.wikimedia.org/wiki/File:Pull_ups_1.svg , https://commons.wikimedia.org/wiki/File:Pull_ups_2.svg |
+| pushup-1, pushup-2 | https://commons.wikimedia.org/wiki/File:Push_ups_1.svg , https://commons.wikimedia.org/wiki/File:Push_ups_2.svg |

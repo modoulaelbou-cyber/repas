@@ -206,7 +206,9 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
     reardelt: { name: 'Oiseau haltères', load: 5, step: 1, unit: 'kg / haltère' },
     goblet: { name: 'Goblet squat', load: null, step: 2, unit: 'kg' },
     legcurl: { name: 'Leg curl allongé', load: 23, step: 2.5, unit: 'kg' },
-    revcrunch: { name: 'Reverse crunch', load: null, step: 0, unit: '' }
+    revcrunch: { name: 'Reverse crunch', load: null, step: 0, unit: '' },
+    pullup: { name: 'Tractions (max)', load: null, step: 0, unit: '', bw: true },
+    pushup: { name: 'Pompes (max)', load: null, step: 0, unit: '', bw: true }
   };
   /* Variante aux haltères : même place dans le programme, charge à part */
   var ALT = { curl: 'curldb', hammer: 'hammerdb' };
@@ -216,7 +218,8 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
     chest: ['chest-1'], chestlight: ['chest-1'], incline: ['incline-1', 'incline-2'], pulldown: ['pulldown-1', 'pulldown-2'],
     row: ['row-1', 'row-2'], lateral: ['lateral-1', 'lateral-2'], triceps: ['triceps-1', 'triceps-2'], hammer: ['hammer-1', 'hammer-2'],
     wrist: ['wrist-1'], crunch: ['crunch-1'], curl: ['curl-1', 'curl-2'], revcrunch: ['revcrunch-1', 'revcrunch-2'], reardelt: ['reardelt-1'], goblet: ['goblet-1'], legcurl: ['legcurl-1', 'legcurl-2'],
-    curldb: ['curldb-1', 'curldb-2'], hammerdb: ['hammerdb-1', 'hammerdb-2']
+    curldb: ['curldb-1', 'curldb-2'], hammerdb: ['hammerdb-1', 'hammerdb-2'],
+    pullup: ['pullup-1', 'pullup-2'], pushup: ['pushup-1', 'pushup-2']
   };
   /* Muscles travaillés : le premier est le muscle principal */
   var MUSC = {
@@ -236,10 +239,12 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
     reardelt: ['Arrière des épaules', 'haut du dos'],
     goblet: ['Quadriceps', 'fessiers', 'gainage'],
     legcurl: ['Ischio-jambiers (arrière des cuisses)', 'mollets'],
-    revcrunch: ['Bas des abdominaux', 'fléchisseurs de hanche']
+    revcrunch: ['Bas des abdominaux', 'fléchisseurs de hanche'],
+    pullup: ['Grand dorsal (dos)', 'biceps', 'avant-bras (prise)'],
+    pushup: ['Pectoraux', 'triceps', 'épaules (avant)', 'gainage']
   };
   /* Nom court pour le résumé du jour */
-  var MSHORT = { chest: 'pecs', chestlight: 'pecs', incline: 'haut des pecs', pulldown: 'dos', row: 'dos', lateral: 'épaules', triceps: 'triceps', curl: 'biceps', hammer: 'biceps', curldb: 'biceps', hammerdb: 'biceps', wrist: 'avant-bras', crunch: 'abdos', reardelt: 'arrière d\'épaules', goblet: 'jambes', legcurl: 'jambes', revcrunch: 'abdos' };
+  var MSHORT = { chest: 'pecs', chestlight: 'pecs', incline: 'haut des pecs', pulldown: 'dos', row: 'dos', lateral: 'épaules', triceps: 'triceps', curl: 'biceps', hammer: 'biceps', curldb: 'biceps', hammerdb: 'biceps', wrist: 'avant-bras', crunch: 'abdos', reardelt: 'arrière d\'épaules', goblet: 'jambes', legcurl: 'jambes', revcrunch: 'abdos', pullup: 'dos', pushup: 'pecs' };
   function muscHtml(ex) { var m = MUSC[ex]; return m ? '<p class="musc"><b>' + esc(m[0]) + '</b>' + (m.length > 1 ? ' · ' + m.slice(1).map(esc).join(' · ') : '') + '</p>' : ''; }
   var PICNOTE = {
     chest: 'Ta machine est sans doute droite : même principe, tu pousses les poignées devant toi.',
@@ -253,9 +258,9 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
     pulldown: 'tirage vertical poulie haute', row: 'rowing poulie basse assis', lateral: 'élévations latérales haltères',
     triceps: 'extension triceps poulie haute', curl: 'curl biceps poulie basse barre', hammer: 'curl marteau corde poulie', curldb: 'curl biceps haltères debout', hammerdb: 'curl marteau haltères',
     wrist: 'flexion des poignets haltères assis', crunch: 'crunch poulie haute à genoux', reardelt: 'oiseau haltères buste penché',
-    goblet: 'goblet squat haltère', legcurl: 'leg curl allongé machine', revcrunch: 'reverse crunch au sol'
+    goblet: 'goblet squat haltère', legcurl: 'leg curl allongé machine', revcrunch: 'reverse crunch au sol', pullup: 'tractions pronation barre fixe', pushup: 'pompes au sol bonne technique'
   };
-  var OPEN = {};
+  var OPEN = {}, flashRec = '';
   function thumbHtml(ex, key) {
     var pics = PICS[ex] || []; if (!pics.length) return '';
     return '<button type="button" class="thumb" data-big="' + key + '" aria-label="Agrandir l\'image : ' + esc(EX[ex].name) + '"><img decoding="async" alt="" src="img/' + pics[0] + '.jpg">' + (pics.length > 1 ? '<span>+1</span>' : '') + '</button>';
@@ -270,22 +275,24 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
     return '<div class="links"><a href="https://www.google.com/search?tbm=isch&q=' + encodeURIComponent(q) + '" target="_blank" rel="noopener">Plus de photos</a><a href="https://www.youtube.com/results?search_query=' + encodeURIComponent('tuto ' + q) + '" target="_blank" rel="noopener">Vidéo du mouvement</a></div>';
   }
   function it(ex, sets, reps, rest, restS) { return { ex: ex, sets: sets, reps: reps, rest: rest, restS: restS }; }
+  /* Tests du max chaque jour, en fin de séance (2 séries au max) */
+  var MAXT = it('pullup', 2, 'max', '2–3 min', 150), MAXP = it('pushup', 2, 'max', '2 min', 120);
   var PROG = [
     { k: 'lun', d: 'Lundi', t: 'Haut du corps A', items: [
       it('chest', 4, '6–10', '2–3 min', 150), it('incline', 3, '8–12', '2 min', 120), it('pulldown', 3, '8–12', '2 min', 120),
-      it('row', 3, '8–12', '2 min', 120), it('lateral', 3, '12–20', '60–90 s', 75), it('triceps', 2, '10–15', '60–90 s', 75)] },
+      it('row', 3, '8–12', '2 min', 120), it('lateral', 3, '12–20', '60–90 s', 75), it('triceps', 2, '10–15', '60–90 s', 75), MAXT, MAXP] },
     { k: 'mar', d: 'Mardi', t: 'Bras, avant-bras et abdos', opt: true, items: [
       it('curl', 3, '8–12', '90 s', 90), it('hammer', 3, '10–15', '90 s', 90), it('wrist', 2, '12–20', '60 s', 60),
-      it('triceps', 3, '10–15', '60–90 s', 75), it('crunch', 3, '10–15', '60–90 s', 75)] },
+      it('triceps', 3, '10–15', '60–90 s', 75), it('crunch', 3, '10–15', '60–90 s', 75), MAXT, MAXP] },
     { k: 'mer', d: 'Mercredi', t: 'Haut du corps B', items: [
       it('pulldown', 3, '8–12', '2 min', 120), it('row', 3, '8–12', '2 min', 120), it('reardelt', 3, '12–20', '60–90 s', 75),
-      it('curl', 3, '8–12', '90 s', 90), it('wrist', 2, '12–20', '60 s', 60)] },
+      it('curl', 3, '8–12', '90 s', 90), it('wrist', 2, '12–20', '60 s', 60), MAXT, MAXP] },
     { k: 'jeu', d: 'Jeudi', t: 'Pecs, épaules, triceps et abdos', opt: true, items: [
       it('chest', 3, '8–12', '2 min', 120), it('lateral', 3, '12–20', '60–90 s', 75), it('triceps', 3, '10–15', '60–90 s', 75),
-      it('crunch', 3, '10–15', '60–90 s', 75)] },
+      it('crunch', 3, '10–15', '60–90 s', 75), MAXT, MAXP] },
     { k: 'ven', d: 'Vendredi', t: 'Jambes, pecs léger et abdos', items: [
       it('goblet', 3, '8–12', '2 min', 120), it('legcurl', 3, '10–15', '90 s', 90), it('chestlight', 2, '10–12', '90 s', 90),
-      it('revcrunch', 3, '12–15', '60–90 s', 75), it('crunch', 3, '10–15', '60–90 s', 75)] }
+      it('revcrunch', 3, '12–15', '60–90 s', 75), it('crunch', 3, '10–15', '60–90 s', 75), MAXT, MAXP] }
   ];
   /* Séries déjà cochées cette semaine au moment de la création de l'appli */
   var START_DONE = { lun: [3, 3, 3, 3, 3, 2], mer: [3, 3, 3, 2, 2], jeu: [3, 3, 3, 2] };
@@ -363,11 +370,12 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
         var st = S.done[P.k + '.' + i + '.' + s] || {};
         if (!st.c) all = false; if (!(st.r >= mr)) top = false;
         sets += '<div class="set' + (st.c ? ' on' : '') + '" data-i="' + i + '" data-s="' + s + '"><button type="button" aria-pressed="' + !!st.c + '" aria-label="Série ' + (s + 1) + (st.c ? ' faite' : ' à faire') + '">' + CHECK + '</button>' +
-          '<label>S' + (s + 1) + ' <input type="number" inputmode="numeric" min="0" max="99" value="' + (st.r || '') + '" placeholder="' + (pv && pv.r && pv.r[s] ? pv.r[s] : mr) + '" aria-label="Répétitions série ' + (s + 1) + '"> reps</label></div>';
+          '<label>S' + (s + 1) + ' <input type="number" inputmode="numeric" min="0" max="99" value="' + (st.r || '') + '" placeholder="' + (pv && pv.r && pv.r[s] ? pv.r[s] : (mr || 'max')) + '" aria-label="Répétitions série ' + (s + 1) + '"> reps</label></div>';
       }
       var key = P.k + '.' + i, th = thumbHtml(x.ex, key);
       var h = '<article class="card ex' + (all ? ' done' : '') + '" data-ex="' + x.ex + '"><div class="exhead' + (th ? '' : ' noimg') + '">' + th + '<div><h3><span class="n">' + (i + 1) + '</span>' + esc(e.name) + '</h3>' +
         '<p class="meta"><b>' + x.sets + ' × ' + x.reps + '</b> · repos ' + x.rest + (x.mod ? ' · modifié' : '') + '</p>' + muscHtml(x.ex) + (x.bonus ? '<span class="bonus">' + esc(x.bonus) + '</span>' : '') + '</div></div>' + bigHtml(x.ex, key);
+      if (e.bw) { var bst = (S.best || {})[x.ex]; h += '<p class="prev">' + (bst ? 'Record : <b>' + bst.r + ' reps</b> (le ' + bst.d.split('-').reverse().slice(0, 2).join('/') + ')' : 'Note ton max à chaque série : ton record s\'affichera ici.') + (flashRec && flashRec.indexOf(e.name.replace(' (max)', '')) === 0 ? ' · <b>' + esc(flashRec) + '</b>' : '') + '</p>'; }
       if (S.notes[x.ex]) h += '<p class="note"><b>Note :</b> ' + esc(S.notes[x.ex]) + '</p>';
       if (pv) h += '<p class="prev">Semaine dernière : <b>' + (pv.load != null ? nf(pv.load) + ' ' + e.unit.replace(' / haltère', '') : 'sans charge') + '</b>' + (pv.r && pv.r.some(Boolean) ? ' · ' + pv.r.map(function (r) { return r || '–'; }).join(', ') + ' reps' : ' · ' + pv.c + '/' + pv.n + ' séries') + '</p>';
       if (i === firstLoaded(P) && L > 0) h += warmHtml(e, L);
@@ -495,6 +503,7 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
     var box = e.target.closest('.set'); if (!box) return;
     var k = cur + '.' + box.getAttribute('data-i') + '.' + box.getAttribute('data-s'), o = S.done[k] || {}, r = parseInt(e.target.value, 10);
     if (isNaN(r) || r <= 0) delete o.r; else { o.r = Math.min(r, 99); o.c = true; }
+    if (EX[ex].bw && o.r) { S.best = S.best || {}; var bb = S.best[ex]; if (!bb || o.r > bb.r) { S.best[ex] = { r: o.r, d: today() }; if (bb) flashRec = EX[ex].name.replace(' (max)', '') + ' : nouveau record, ' + o.r + ' reps !'; } }
     S.done[k] = o; save(); render();
   });
   $('#newweek').addEventListener('click', function () {
