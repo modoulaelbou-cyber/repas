@@ -1,5 +1,5 @@
 /* Service worker : garde l'app en cache pour qu'elle marche sans connexion. */
-var CACHE = 'calculateur-repas-v16';
+var CACHE = 'calculateur-repas-v17';
 var FILES = ['./', 'index.html', 'nutrition.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png'];
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(FILES); }).then(function () { return self.skipWaiting(); }));
@@ -19,6 +19,8 @@ self.addEventListener('fetch', function (e) {
         if (res && res.ok) { var copy = res.clone(); caches.open(CACHE).then(function (c) { c.put(e.request, copy); }); }
         return res;
       }).catch(function () { return hit; });
+      /* la page elle-même : réseau d'abord (mise à jour immédiate), cache si hors ligne */
+      if (e.request.mode === 'navigate' || /\/$|index\.html$|\.js$/.test(url.pathname)) return net.then(function (r) { return r || hit; }, function () { return hit; });
       return hit || net;
     })
   );

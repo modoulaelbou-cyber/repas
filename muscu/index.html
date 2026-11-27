@@ -542,7 +542,7 @@ h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; lett
   $('#optwake').addEventListener('change', function (e) { S.opt.wake = e.target.checked; save(); if (!S.opt.wake && wake) { wake.release(); wake = null; } });
   syncOpts();
   render();
-  if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+  if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').then(function (r) { r.update(); }).catch(function () {}); var hadCtl = !!navigator.serviceWorker.controller, reloaded = false; navigator.serviceWorker.addEventListener('controllerchange', function () { if (hadCtl && !reloaded) { reloaded = true; location.reload(); } }); });
 })();
 </script>
 </body>

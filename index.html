@@ -1682,7 +1682,7 @@ body:not([data-view="repas"]) .bar { display: none; }
 
 <script>
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+  window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').then(function (r) { r.update(); }).catch(function () {}); var hadCtl = !!navigator.serviceWorker.controller, reloaded = false; navigator.serviceWorker.addEventListener('controllerchange', function () { if (hadCtl && !reloaded) { reloaded = true; location.reload(); } }); });
 }
 </script>
 </body>
